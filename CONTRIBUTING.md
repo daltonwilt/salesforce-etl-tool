@@ -6,7 +6,7 @@ By participating, you agree to follow the [Code of Conduct](CODE_OF_CONDUCT.md).
 
 ## Reporting Bugs and Requesting Features
 
-- Search [existing issues](https://github.com/daltonwilt/sfdx-project-template/issues) first to avoid duplicates.
+- Search [existing issues](https://github.com/daltonwilt/salesforce-etl-tool/issues) first to avoid duplicates.
 - Use the **Bug report** or **Feature request** template when opening a new issue.
 - For security vulnerabilities, follow [SECURITY.md](SECURITY.md) instead of opening an issue.
 

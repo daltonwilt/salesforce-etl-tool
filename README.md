@@ -1,42 +1,6 @@
-# sfdx-project-template
+# salesforce-etl-tool
 
 A Salesforce DX project.
-
-<!-- template:start -->
-
-## Using This Template
-
-This repository is a GitHub template for new Salesforce DX projects. It includes linting, formatting, Jest tests, CI, Dependabot, issue and pull request templates, and community health files.
-
-GitHub templates copy files only, so `scripts/setup-repo.sh` applies the repository settings and personalizes the project names.
-
-1. Create a new repository from this template:
-
-   ```sh
-   gh repo create my-project --template daltonwilt/sfdx-project-template --public --clone
-   cd my-project
-   ```
-
-   Or click **Use this template** on GitHub and clone the new repository.
-
-2. Install dependencies and run the setup script:
-
-   ```sh
-   npm install
-   scripts/setup-repo.sh
-   ```
-
-   The script:
-   - Replaces the template name with your repository name in `package.json`, `sfdx-project.json`, the scratch org definition, and the docs
-   - Points `CODEOWNERS` at the repository owner
-   - Removes this section from the README
-   - Configures GitHub: squash-only merging, auto-deleted branches, wiki off, Dependabot alerts and security updates, secret scanning with push protection, private vulnerability reporting, CodeQL, read-only workflow tokens, approval for first-time contributors' workflows, and a `main` ruleset requiring the **Lint** and **Unit tests** checks
-
-   Run `scripts/setup-repo.sh --help` for options. The script is safe to re-run.
-
-3. Replace `[INSERT CONTACT METHOD]` in `CODE_OF_CONDUCT.md`, update this README's description, then commit and push.
-
-<!-- template:end -->
 
 ## Prerequisites
 
@@ -48,8 +12,8 @@ GitHub templates copy files only, so `scripts/setup-repo.sh` applies the reposit
 ## Getting Started
 
 ```sh
-git clone https://github.com/daltonwilt/sfdx-project-template.git
-cd sfdx-project-template
+git clone https://github.com/daltonwilt/salesforce-etl-tool.git
+cd salesforce-etl-tool
 npm install
 ```
 

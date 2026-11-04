@@ -1,5 +1,5 @@
 {
-  "name": "sfdx-project-template",
+  "name": "salesforce-etl-tool",
   "private": true,
   "version": "1.0.0",
   "description": "Salesforce DX project",

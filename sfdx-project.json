@@ -5,7 +5,7 @@
       "default": true
     }
   ],
-  "name": "sfdx-project-template",
+  "name": "salesforce-etl-tool",
   "namespace": "",
   "sfdcLoginUrl": "https://login.salesforce.com",
   "sourceApiVersion": "68.0"

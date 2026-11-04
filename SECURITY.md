@@ -10,7 +10,7 @@ Only the latest version on the `main` branch receives security fixes.
 
 Instead, report them privately through GitHub's private vulnerability reporting:
 
-1. Go to the [Security Advisories](https://github.com/daltonwilt/sfdx-project-template/security/advisories/new) page.
+1. Go to the [Security Advisories](https://github.com/daltonwilt/salesforce-etl-tool/security/advisories/new) page.
 2. Fill in the form with as much detail as you can.
 
 Please include:

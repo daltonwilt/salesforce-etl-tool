@@ -1,5 +1,5 @@
 {
-  "orgName": "sfdx-project-template",
+  "orgName": "salesforce-etl-tool",
   "edition": "Developer",
   "features": ["EnableSetPasswordInApi"],
   "settings": {

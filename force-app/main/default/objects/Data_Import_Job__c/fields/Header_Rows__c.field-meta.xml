@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Header_Rows__c</fullName>
+    <description>The file header block, captured from the first chunk. Rebuilding a reject file needs it verbatim, or the same template would not parse what it hands back.</description>
+    <label>Header Rows</label>
+    <length>131072</length>
+    <trackTrending>false</trackTrending>
+    <type>LongTextArea</type>
+    <visibleLines>10</visibleLines>
+</CustomField>

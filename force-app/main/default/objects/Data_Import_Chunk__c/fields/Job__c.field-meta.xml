@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Job__c</fullName>
+    <description>Parent job. Master-detail so chunks are cleaned up with it.</description>
+    <label>Job</label>
+    <referenceTo>Data_Import_Job__c</referenceTo>
+    <relationshipLabel>Data Import Chunks</relationshipLabel>
+    <relationshipName>Chunks</relationshipName>
+    <relationshipOrder>0</relationshipOrder>
+    <reparentableMasterDetail>false</reparentableMasterDetail>
+    <trackTrending>false</trackTrending>
+    <type>MasterDetail</type>
+    <writeRequiresMasterRead>false</writeRequiresMasterRead>
+</CustomField>

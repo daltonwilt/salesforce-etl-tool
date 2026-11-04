@@ -1,0 +1,68 @@
+name: Bug Report
+description: Report something that isn't working as expected
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a bug. For security vulnerabilities, follow SECURITY.md instead.
+  - type: input
+    id: component
+    attributes:
+      label: Component
+      description: Which component or Apex class is affected?
+      placeholder: e.g. c-data-table
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: A clear description of the bug.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Add the component to a record page
+        2. Click ...
+        3. See error
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: Include error messages, console output, or screenshots.
+    validations:
+      required: true
+  - type: dropdown
+    id: org-type
+    attributes:
+      label: Org type
+      options:
+        - Scratch org
+        - Sandbox
+        - Developer Edition
+        - Production
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: api-version
+    attributes:
+      label: API version
+      placeholder: e.g. 68.0
+  - type: input
+    id: browser
+    attributes:
+      label: Browser
+      placeholder: e.g. Chrome 130

@@ -1,0 +1,45 @@
+# List files or directories below to ignore them when running deploy, retrieve, push, pull, and status.
+# https://developer.salesforce.com/docs/atlas.en-us.sfdx_dev.meta/sfdx_dev/sfdx_dev_exclude_source.htm
+#
+
+# --- Tooling / build noise -------------------------------------------
+**/jsconfig.json
+**/.eslintrc.json
+**/tsconfig.json
+
+# Manifests are not source. manifest/ sits outside packageDirectories and is never
+# evaluated, so only the in-source case needs a rule.
+**/package.xml
+
+# --- Things that fight you on deploy ---------------------------------
+# Profiles: usually managed per-org, or they drag in refs to metadata
+# that doesn't exist in the target org
+**/profiles/**
+
+# Secrets / environment-specific
+**/connectedApps/**
+**/namedCredentials/**
+
+# --- Test scaffolding you don't want in the org ----------------------
+**/__tests__/**
+
+# Documentation. LWC/Aura bundles deploy every file in the bundle folder, so a README.md
+# next to a component would ship to the org. Safe for CustomMetadata: records are stored as
+# *.md-meta.xml and the ignore matcher tests the full filename, so this rule does not match
+# them (verified against CLI 2.138.6 with `sf project convert source`).
+**/*.md
+
+# OS noise that can land inside a metadata folder (e.g. a static resource directory)
+.DS_Store
+Thumbs.db
+
+# --- Deliberately NOT ignored ---
+
+# .sf/ and .sfdx/ - internal CLI cache dirs. They are already git-ignored and are never
+# inside a package directory, so listing them here does nothing for deploy/retrieve. It
+# does break "SFDX: Diff Source Against Org", which stages the org copy under
+# .sf/orgs/<orgId>/remoteMetadata and resolves source components from it - a .sf/ rule
+# makes that resolve to zero and the command reports "No components retrieved from org".
+
+# **/*.ts - TypeScript is a supported LWC source format; ignoring it would drop real
+# components if TS LWC is ever adopted. tsconfig.json (config, not source) is ignored above.

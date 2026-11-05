@@ -1,0 +1,88 @@
+<template>
+  <div class="slds-box slds-var-m-bottom_small">
+    <h2 class="slds-text-heading_small slds-var-m-bottom_small">{label}</h2>
+
+    <template lwc:if={showPicker}>
+      <lightning-combobox class="slds-var-m-bottom_small" label="What are you importing?" value={selectedTemplate}
+        options={templateOptions} onchange={handleTemplateChange} disabled={busy}></lightning-combobox>
+    </template>
+
+    <!-- A plain input rather than lightning-file-upload: the file is read here and sliced, never
+         handed to Salesforce whole, which is what removes the ceiling on how large it can be. -->
+    <div class="slds-form-element slds-var-m-bottom_small">
+      <label class="slds-form-element__label" for="picker">CSV file</label>
+      <div class="slds-form-element__control">
+        <input id="picker" type="file" accept=".csv,text/csv" onchange={handleFile} disabled={busy} />
+      </div>
+    </div>
+
+    <template lwc:if={showProblem}>
+      <div class="slds-box slds-theme_error slds-var-m-bottom_small" role="alert">
+        <p>{message}</p>
+      </div>
+    </template>
+
+    <template lwc:if={noTemplates}>
+      <p class="slds-text-color_weak slds-var-m-bottom_small">
+        No import templates are configured, or you do not have access to any.
+      </p>
+    </template>
+
+    <template lwc:if={busy}>
+      <div class="slds-var-m-vertical_small">
+        <lightning-spinner alternative-text="Importing" size="small" variant="brand"></lightning-spinner>
+        <p class="slds-text-body_small slds-var-m-top_x-small">{statusLabel}</p>
+      </div>
+    </template>
+
+    <!-- Found while reading, before the import was started: nothing has been written. -->
+    <template lwc:if={hasBlockingErrors}>
+      <div class="slds-box slds-theme_warning slds-var-m-top_small" role="alert">
+        <p class="slds-var-m-bottom_x-small"><strong>{message}</strong></p>
+        <ul class="slds-list_dotted">
+          <template for:each={blockingErrors} for:item="line">
+            <li key={line} class="slds-text-body_small">{line}</li>
+          </template>
+        </ul>
+      </div>
+    </template>
+
+    <template lwc:if={finished}>
+      <div class="slds-box slds-var-m-top_small">
+        <p class="slds-var-m-bottom_x-small">
+          <strong>{message}</strong>
+        </p>
+
+        <template lwc:if={errorLines.length}>
+          <p class="slds-text-body_small slds-var-m-bottom_x-small">
+            Download the template back again with only the rows that failed in
+            it, fix them in place, and upload that file.
+          </p>
+          <div class="slds-var-m-bottom_small">
+            <template lwc:if={hasRejects}>
+              <lightning-button label="Download rows to fix" variant="brand" icon-name="utility:download"
+                class="slds-var-m-right_x-small" onclick={handleDownloadRejects}
+                disabled={buildingDownload}></lightning-button>
+            </template>
+            <lightning-button label="Open import record" variant="neutral" onclick={handleOpenJob}></lightning-button>
+            <!--
+              The anchor the assembled CSV is handed to. Kept in the template rather than created
+              on the fly so the download stays inside the component's own DOM.
+            -->
+            <a class="reject-download slds-hide" aria-hidden="true">download</a>
+          </div>
+
+          <div class="slds-scrollable_y" style="max-height: 18rem">
+            <ul class="slds-list_dotted">
+              <template for:each={errorLines} for:item="line">
+                <li key={line.key} class="slds-text-body_small slds-text-color_error">
+                  {line.text}
+                </li>
+              </template>
+            </ul>
+          </div>
+        </template>
+      </div>
+    </template>
+  </div>
+</template>

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<LightningComponentBundle xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>68.0</apiVersion>
+    <isExposed>true</isExposed>
+    <masterLabel>Data Importer</masterLabel>
+    <description>Loads a CSV into any object from a configured template, with no ceiling on row count. The file is sliced in the browser and staged, so it never reaches Apex whole.</description>
+    <targets>
+        <target>lightning__RecordPage</target>
+        <target>lightning__AppPage</target>
+        <target>lightningCommunity__Page</target>
+        <target>lightningCommunity__Default</target>
+    </targets>
+    <targetConfigs>
+        <targetConfig targets="lightning__RecordPage,lightning__AppPage">
+            <property name="templateName" label="Template" type="String"
+                description="DeveloperName of a Data Import Template. Leave blank to let the user choose." />
+            <property name="label" label="Heading" type="String" default="Import Data" />
+        </targetConfig>
+    </targetConfigs>
+</LightningComponentBundle>

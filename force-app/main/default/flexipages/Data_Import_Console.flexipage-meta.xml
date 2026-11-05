@@ -3,8 +3,8 @@
     <flexiPageRegions>
         <itemInstances>
             <componentInstance>
-                <componentName>g_DataImporter</componentName>
-                <identifier>c_g_DataImporter</identifier>
+                <componentName>dataImporter</componentName>
+                <identifier>c_dataImporter</identifier>
             </componentInstance>
         </itemInstances>
         <name>main</name>

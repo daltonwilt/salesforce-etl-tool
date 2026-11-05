@@ -243,7 +243,7 @@ export default class DataImport extends NavigationMixin(LightningElement) {
     saveFile(content, name, {
       anchor: this.template.querySelector("a.reject-download"),
       fallbackType: "text/csv;charset=utf-8",
-      source: "g_DataImporter.download"
+      source: "dataImporter.download"
     });
   }
 

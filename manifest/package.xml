@@ -18,5 +18,9 @@
         <members>Data_Import_UtilityBar</members>
         <name>FlexiPage</name>
     </types>
+    <types>
+        <members>dataImport</members>
+        <name>LightningComponentBundle</name>
+    </types>
     <version>68.0</version>
 </Package>

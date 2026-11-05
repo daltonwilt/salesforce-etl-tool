@@ -2,25 +2,74 @@
 <Package xmlns="http://soap.sforce.com/2006/04/metadata">
     <types>
         <members>DataImport</members>
-        <members>DataImportTest</members>
         <members>DataImportBatch</members>
         <members>DataImportBatchTest</members>
         <members>DataImportJob</members>
         <members>DataImportJobTest</members>
         <members>DataImportSpec</members>
         <members>DataImportSpecTest</members>
+        <members>DataImportTest</members>
         <members>DataImportWalker</members>
         <members>DataImportWalkerTest</members>
         <name>ApexClass</name>
     </types>
     <types>
+        <members>Data_Import_Chunk__c.Body__c</members>
+        <members>Data_Import_Chunk__c.First_Row_Number__c</members>
+        <members>Data_Import_Chunk__c.Is_Reject__c</members>
+        <members>Data_Import_Chunk__c.Job__c</members>
+        <members>Data_Import_Chunk__c.Processed__c</members>
+        <members>Data_Import_Chunk__c.Section__c</members>
+        <members>Data_Import_Chunk__c.Sequence__c</members>
+        <members>Data_Import_Job__c.Bindings__c</members>
+        <members>Data_Import_Job__c.Chunks_Processed__c</members>
+        <members>Data_Import_Job__c.Error_Count__c</members>
+        <members>Data_Import_Job__c.Errors__c</members>
+        <members>Data_Import_Job__c.File_Name__c</members>
+        <members>Data_Import_Job__c.Header_Rows__c</members>
+        <members>Data_Import_Job__c.Message__c</members>
+        <members>Data_Import_Job__c.Mode__c</members>
+        <members>Data_Import_Job__c.Records_Committed__c</members>
+        <members>Data_Import_Job__c.Records_Updated__c</members>
+        <members>Data_Import_Job__c.Rows_Failed__c</members>
+        <members>Data_Import_Job__c.Rows_Read__c</members>
+        <members>Data_Import_Job__c.Rows_Valid__c</members>
+        <members>Data_Import_Job__c.Section_Map__c</members>
+        <members>Data_Import_Job__c.Status__c</members>
+        <members>Data_Import_Job__c.Template__c</members>
+        <members>Data_Import_Job__c.Total_Chunks__c</members>
+        <members>Data_Import_Template__mdt.Active__c</members>
+        <members>Data_Import_Template__mdt.Definition__c</members>
+        <members>Data_Import_Template__mdt.Target_Summary__c</members>
+        <members>Data_Import_Template__mdt.Version__c</members>
+        <name>CustomField</name>
+    </types>
+    <types>
+        <members>Data_Import_Chunk__c</members>
+        <members>Data_Import_Job__c</members>
+        <members>Data_Import_Template__mdt</members>
+        <name>CustomObject</name>
+    </types>
+    <types>
         <members>Data_Import_Console</members>
+        <members>Data_Import_Job_Record_Page</members>
         <members>Data_Import_UtilityBar</members>
         <name>FlexiPage</name>
     </types>
     <types>
+        <members>Data_Import_Chunk__c-Data Import Chunk Layout</members>
+        <members>Data_Import_Job__c-Data Import Job Layout</members>
+        <members>Data_Import_Template__mdt-Data Import Template Layout</members>
+        <name>Layout</name>
+    </types>
+    <types>
         <members>dataImport</members>
         <name>LightningComponentBundle</name>
+    </types>
+    <types>
+        <members>Data_Import_Chunk__c.All</members>
+        <members>Data_Import_Job__c.All</members>
+        <name>ListView</name>
     </types>
     <version>68.0</version>
 </Package>

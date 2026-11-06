@@ -1,0 +1,11 @@
+<template>
+  <template lwc:if={show.exampleDataExport}>
+    <c-example-data-export></c-example-data-export>
+  </template>
+  <template lwc:elseif={show.exampleDataImport}>
+    <c-example-data-import></c-example-data-import>
+  </template>
+  <template lwc:else>
+    <p class="slds-text-color_weak">No example for {name}.</p>
+  </template>
+</template>

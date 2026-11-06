@@ -1,0 +1,196 @@
+<template>
+  <div class="library">
+    <!-- Component list -->
+    <nav class="library-nav" aria-label="Components">
+      <div class="library-search">
+        <lightning-input
+          type="search"
+          label="Search components"
+          variant="label-hidden"
+          placeholder="Search components…"
+          value={searchTerm}
+          onchange={handleSearch}
+        ></lightning-input>
+      </div>
+
+      <template lwc:if={hasNavResults}>
+        <lightning-vertical-navigation
+          selected-item={selectedName}
+          onselect={handleSelect}
+          compact
+        >
+          <template for:each={navSections} for:item="section">
+            <lightning-vertical-navigation-section
+              key={section.key}
+              label={section.label}
+            >
+              <template for:each={section.items} for:item="item">
+                <lightning-vertical-navigation-item
+                  key={item.name}
+                  label={item.label}
+                  name={item.name}
+                ></lightning-vertical-navigation-item>
+              </template>
+            </lightning-vertical-navigation-section>
+          </template>
+        </lightning-vertical-navigation>
+      </template>
+      <template lwc:else>
+        <p class="library-empty">No components match.</p>
+      </template>
+    </nav>
+
+    <!-- Selected component -->
+    <main class="library-main">
+      <header class="library-header">
+        <h1 class="library-title">{doc.label}</h1>
+        <p class="library-description">{doc.description}</p>
+        <div class="library-meta">
+          <code class="library-usage">{usage}</code>
+          <span class="library-path">{sourcePath}</span>
+          <template lwc:if={doc.extends}>
+            <span class="library-extends">
+              Extends
+              <a href={doc.extends.url} target="_blank" rel="noopener"
+                >{doc.extends.label}</a
+              >
+            </span>
+          </template>
+        </div>
+      </header>
+
+      <lightning-tabset active-tab-value={activeTab}>
+        <!-- Example -->
+        <lightning-tab
+          label="Example"
+          value="example"
+          onactive={handleTabActive}
+        >
+          <template lwc:if={doc.exampleNote}>
+            <div
+              class="slds-notify slds-notify_alert slds-alert_warning library-note"
+              role="note"
+            >
+              <lightning-icon
+                icon-name="utility:info"
+                size="x-small"
+                class="slds-var-m-right_x-small"
+              ></lightning-icon>
+              {doc.exampleNote}
+            </div>
+          </template>
+
+          <section class="library-preview" aria-label="Live example">
+            <c-component-library-example
+              name={doc.example}
+            ></c-component-library-example>
+          </section>
+
+          <c-component-library-code
+            files={exampleFiles}
+          ></c-component-library-code>
+        </lightning-tab>
+
+        <!-- Documentation -->
+        <lightning-tab
+          label="Documentation"
+          value="documentation"
+          onactive={handleTabActive}
+        >
+          <div class="library-doc">
+            <template for:each={documentationSections} for:item="section">
+              <section key={section.key} class="library-section">
+                <h2 class="library-section-heading">{section.heading}</h2>
+                <template for:each={section.blocks} for:item="block">
+                  <template lwc:if={block.isParagraph}>
+                    <p key={block.key} class="library-paragraph">
+                      <template for:each={block.segments} for:item="segment">
+                        <template lwc:if={segment.isCode}>
+                          <code key={segment.key} class="library-inline-code"
+                            >{segment.text}</code
+                          >
+                        </template>
+                        <template lwc:else>
+                          <span key={segment.key}>{segment.text}</span>
+                        </template>
+                      </template>
+                    </p>
+                  </template>
+                  <template lwc:elseif={block.isCode}>
+                    <pre key={block.key} class="library-code"><code>{block.code}</code></pre>
+                  </template>
+                  <template lwc:elseif={block.isList}>
+                    <ul key={block.key} class="slds-list_dotted library-list">
+                      <template for:each={block.items} for:item="item">
+                        <li key={item.key}>
+                          <template for:each={item.segments} for:item="segment">
+                            <template lwc:if={segment.isCode}>
+                              <code
+                                key={segment.key}
+                                class="library-inline-code"
+                                >{segment.text}</code
+                              >
+                            </template>
+                            <template lwc:else>
+                              <span key={segment.key}>{segment.text}</span>
+                            </template>
+                          </template>
+                        </li>
+                      </template>
+                    </ul>
+                  </template>
+                </template>
+              </section>
+            </template>
+          </div>
+        </lightning-tab>
+
+        <!-- Specification -->
+        <lightning-tab
+          label="Specification"
+          value="specification"
+          onactive={handleTabActive}
+        >
+          <template lwc:if={hasSpecTables}>
+            <template for:each={specTables} for:item="table">
+              <section key={table.key} class="library-section">
+                <h2 class="library-section-heading">{table.title}</h2>
+                <div class="library-table-scroll">
+                  <table
+                    class="slds-table slds-table_bordered slds-table_cell-buffer slds-no-row-hover library-table"
+                    aria-label={table.title}
+                  >
+                    <thead>
+                      <tr class="slds-line-height_reset">
+                        <template for:each={table.columns} for:item="column">
+                          <th key={column.field} scope="col">{column.label}</th>
+                        </template>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <template for:each={table.rows} for:item="row">
+                        <tr key={row.key}>
+                          <template for:each={row.cells} for:item="cell">
+                            <td key={cell.key} class="slds-cell-wrap">
+                              <template lwc:if={cell.isCode}>
+                                <code class="library-inline-code">{cell.value}</code>
+                              </template>
+                              <template lwc:else>{cell.value}</template>
+                            </td>
+                          </template>
+                        </tr>
+                      </template>
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </template>
+          </template>
+          <template lwc:else>
+            <p class="library-empty">Nothing to specify.</p>
+          </template>
+        </lightning-tab>
+      </lightning-tabset>
+    </main>
+  </div>
+</template>

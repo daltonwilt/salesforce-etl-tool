@@ -1,0 +1,163 @@
+/* SLDS 2 global styling hooks, each falling back to the value it replaces for orgs without them. */
+
+:host {
+  display: block;
+}
+
+.library {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--slds-g-spacing-5, 1.5rem);
+  padding: var(--slds-g-spacing-5, 1.5rem);
+  background: var(--slds-g-color-surface-container-1, #ffffff);
+  border-radius: var(--slds-g-radius-border-3, 0.5rem);
+}
+
+/* ── Component list ───────────────────────────────────────────────────────────────── */
+
+.library-nav {
+  flex: 0 0 15rem;
+  position: sticky;
+  top: var(--slds-g-spacing-4, 1rem);
+}
+
+.library-search {
+  margin-bottom: var(--slds-g-spacing-3, 0.75rem);
+}
+
+.library-empty {
+  color: var(--slds-g-color-on-surface-1, #5c5c5c);
+  font-size: var(--slds-g-font-scale-1, 0.875rem);
+  padding: var(--slds-g-spacing-2, 0.5rem) 0;
+}
+
+/* ── Header ───────────────────────────────────────────────────────────────────────── */
+
+.library-main {
+  flex: 1 1 auto;
+  min-width: 0; /* lets wide code and tables scroll instead of widening the page */
+}
+
+.library-header {
+  padding-bottom: var(--slds-g-spacing-3, 0.75rem);
+}
+
+.library-title {
+  font-size: var(--slds-g-font-scale-6, 1.75rem);
+  font-weight: var(--slds-g-font-weight-bold, 700);
+  line-height: 1.25;
+  color: var(--slds-g-color-on-surface-3, #181818);
+}
+
+.library-description {
+  margin-top: var(--slds-g-spacing-1, 0.25rem);
+  font-size: var(--slds-g-font-scale-2, 1rem);
+  color: var(--slds-g-color-on-surface-2, #2e2e2e);
+}
+
+.library-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--slds-g-spacing-2, 0.5rem) var(--slds-g-spacing-4, 1rem);
+  margin-top: var(--slds-g-spacing-3, 0.75rem);
+  font-size: var(--slds-g-font-scale-1, 0.875rem);
+  color: var(--slds-g-color-on-surface-1, #5c5c5c);
+}
+
+.library-usage {
+  padding: var(--slds-g-spacing-1, 0.25rem) var(--slds-g-spacing-2, 0.5rem);
+  border-radius: var(--slds-g-radius-border-2, 0.25rem);
+  background: var(--slds-g-color-surface-container-2, #f3f3f3);
+  color: var(--slds-g-color-on-surface-3, #181818);
+}
+
+/* ── Example ──────────────────────────────────────────────────────────────────────── */
+
+.library-note {
+  justify-content: flex-start;
+  margin-bottom: var(--slds-g-spacing-3, 0.75rem);
+  border-radius: var(--slds-g-radius-border-2, 0.25rem);
+}
+
+.library-preview {
+  padding: var(--slds-g-spacing-5, 1.5rem);
+  margin-bottom: var(--slds-g-spacing-4, 1rem);
+  border: var(--slds-g-sizing-border-1, 1px) solid
+    var(--slds-g-color-border-1, #c9c9c9);
+  border-radius: var(--slds-g-radius-border-2, 0.25rem);
+}
+
+/* ── Documentation ────────────────────────────────────────────────────────────────── */
+
+.library-doc {
+  max-width: 48rem;
+}
+
+.library-section + .library-section {
+  margin-top: var(--slds-g-spacing-6, 2rem);
+}
+
+.library-section-heading {
+  margin-bottom: var(--slds-g-spacing-2, 0.5rem);
+  font-size: var(--slds-g-font-scale-4, 1.25rem);
+  font-weight: var(--slds-g-font-weight-bold, 700);
+  color: var(--slds-g-color-on-surface-3, #181818);
+}
+
+.library-paragraph,
+.library-list {
+  margin-bottom: var(--slds-g-spacing-3, 0.75rem);
+  line-height: 1.5;
+}
+
+.library-inline-code {
+  padding: 0 var(--slds-g-spacing-1, 0.25rem);
+  border-radius: var(--slds-g-radius-border-1, 0.125rem);
+  background: var(--slds-g-color-surface-container-2, #f3f3f3);
+  font-size: 0.9em;
+  overflow-wrap: anywhere;
+}
+
+.library-code {
+  margin-bottom: var(--slds-g-spacing-3, 0.75rem);
+  padding: var(--slds-g-spacing-3, 0.75rem) var(--slds-g-spacing-4, 1rem);
+  overflow-x: auto;
+  border-radius: var(--slds-g-radius-border-2, 0.25rem);
+  background: var(--slds-g-color-surface-container-2, #f3f3f3);
+  font-size: var(--slds-g-font-scale-1, 0.875rem);
+  line-height: 1.5;
+  white-space: pre;
+}
+
+/* ── Specification ────────────────────────────────────────────────────────────────── */
+
+.library-table-scroll {
+  overflow-x: auto;
+  border: var(--slds-g-sizing-border-1, 1px) solid
+    var(--slds-g-color-border-1, #c9c9c9);
+  border-radius: var(--slds-g-radius-border-2, 0.25rem);
+}
+
+.library-table th {
+  white-space: nowrap;
+}
+
+.library-table td {
+  vertical-align: top;
+}
+
+/* ── Narrow screens: the list goes above the content ─────────────────────────────── */
+
+@media (max-width: 48em) {
+  .library {
+    flex-direction: column;
+    padding: var(--slds-g-spacing-4, 1rem);
+  }
+
+  .library-nav {
+    position: static;
+    flex-basis: auto;
+    width: 100%;
+  }
+}

@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
 <Package xmlns="http://soap.sforce.com/2006/04/metadata">
     <types>
+        <members>DataExportController</members>
+        <members>DataExportControllerTest</members>
         <members>DataImport</members>
         <members>DataImportBatch</members>
         <members>DataImportBatchTest</members>
@@ -14,6 +16,17 @@
         <name>ApexClass</name>
     </types>
     <types>
+        <members>Data_Export__mdt.Styles__c</members>
+        <members>Data_Export__mdt.Zip_File_Name__c</members>
+        <members>Data_Export_Sheet__mdt.Data_Export__c</members>
+        <members>Data_Export_Sheet__mdt.Fields__c</members>
+        <members>Data_Export_Sheet__mdt.File_Name__c</members>
+        <members>Data_Export_Sheet__mdt.Filter__c</members>
+        <members>Data_Export_Sheet__mdt.Object_API_Name__c</members>
+        <members>Data_Export_Sheet__mdt.Order_By__c</members>
+        <members>Data_Export_Sheet__mdt.Row_Limit__c</members>
+        <members>Data_Export_Sheet__mdt.Sort_Order__c</members>
+        <members>Data_Export_Sheet__mdt.Styles__c</members>
         <members>Data_Import_Chunk__c.Body__c</members>
         <members>Data_Import_Chunk__c.First_Row_Number__c</members>
         <members>Data_Import_Chunk__c.Is_Reject__c</members>
@@ -45,6 +58,15 @@
         <name>CustomField</name>
     </types>
     <types>
+        <members>Data_Export.Example_Account_Overview</members>
+        <members>Data_Export_Sheet.Example_Accounts</members>
+        <members>Data_Export_Sheet.Example_Contacts</members>
+        <members>Data_Export_Sheet.Example_Open_Opportunities</members>
+        <name>CustomMetadata</name>
+    </types>
+    <types>
+        <members>Data_Export__mdt</members>
+        <members>Data_Export_Sheet__mdt</members>
         <members>Data_Import_Chunk__c</members>
         <members>Data_Import_Job__c</members>
         <members>Data_Import_Template__mdt</members>
@@ -57,19 +79,32 @@
         <name>FlexiPage</name>
     </types>
     <types>
+        <members>Data_Export__mdt-Data Export Layout</members>
+        <members>Data_Export_Sheet__mdt-Data Export Sheet Layout</members>
         <members>Data_Import_Chunk__c-Data Import Chunk Layout</members>
         <members>Data_Import_Job__c-Data Import Job Layout</members>
         <members>Data_Import_Template__mdt-Data Import Template Layout</members>
         <name>Layout</name>
     </types>
     <types>
+        <members>csv</members>
+        <members>dataExport</members>
         <members>dataImport</members>
+        <members>export</members>
+        <members>utils</members>
+        <members>xlsx</members>
         <name>LightningComponentBundle</name>
     </types>
     <types>
         <members>Data_Import_Chunk__c.All</members>
         <members>Data_Import_Job__c.All</members>
         <name>ListView</name>
+    </types>
+    <types>
+        <members>exceljs</members>
+        <members>jszip</members>
+        <members>papaparse</members>
+        <name>StaticResource</name>
     </types>
     <version>68.0</version>
 </Package>

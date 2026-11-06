@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomMetadata xmlns="http://soap.sforce.com/2006/04/metadata" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+    <label>Accounts</label>
+    <protected>false</protected>
+    <values>
+        <field>Data_Export__c</field>
+        <value xsi:type="xsd:string">Example_Account_Overview</value>
+    </values>
+    <values>
+        <field>Fields__c</field>
+        <value xsi:type="xsd:string">Name, Type, Industry, AnnualRevenue AS Annual Revenue, NumberOfEmployees AS Employees, Owner.Name AS Owner, CreatedDate AS Created</value>
+    </values>
+    <values>
+        <field>Filter__c</field>
+        <value xsi:nil="true"/>
+    </values>
+    <values>
+        <field>Object_API_Name__c</field>
+        <value xsi:type="xsd:string">Account</value>
+    </values>
+    <values>
+        <field>Order_By__c</field>
+        <value xsi:type="xsd:string">Name</value>
+    </values>
+    <values>
+        <field>Row_Limit__c</field>
+        <value xsi:type="xsd:double">1000.0</value>
+    </values>
+    <values>
+        <field>Sort_Order__c</field>
+        <value xsi:type="xsd:double">1.0</value>
+    </values>
+    <values>
+        <field>Styles__c</field>
+        <value xsi:type="xsd:string">{
+  "tabColor": "FF0B5CAB",
+  "columns": {
+    "AnnualRevenue": {
+      "numFmt": "\"$\"#,##0"
+    }
+  }
+}</value>
+    </values>
+    <values>
+        <field>File_Name__c</field>
+        <value xsi:type="xsd:string">Accounts {date}</value>
+    </values>
+</CustomMetadata>

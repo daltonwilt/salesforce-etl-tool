@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomMetadata xmlns="http://soap.sforce.com/2006/04/metadata" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+    <label>Example Account Overview</label>
+    <protected>false</protected>
+    <values>
+        <field>Styles__c</field>
+        <value xsi:type="xsd:string">{
+  "header": {
+    "fill": {
+      "type": "pattern",
+      "pattern": "solid",
+      "fgColor": {
+        "argb": "FF032D60"
+      }
+    }
+  }
+}</value>
+    </values>
+    <values>
+        <field>Zip_File_Name__c</field>
+        <value xsi:type="xsd:string">Account Overview {date}</value>
+    </values>
+</CustomMetadata>

@@ -26,6 +26,7 @@
 * ----------------------------------------------------------------------
 * Dalton Wilt      2026-08-20    Split out of DataImportFrameworkTest.
 * Dalton Wilt      2026-11-06    Run as DataImportTestUser, with Data_Import_User.
+* Dalton Wilt      2026-11-06    Cover the remaining DataImportBatch paths.
 **********************************************************************************/
 
 @isTest
@@ -106,6 +107,60 @@ private class DataImportBatchTest {
         );
     }
 
+    /** Two named tables in one file - a section map is the only way to tell their rows apart. */
+    private static String sectionedTemplate() {
+        return JSON.serialize(
+            new Map<String, Object>{
+                'sections' => new List<Object>{
+                    new Map<String, Object>{
+                        'sectionName' => 'accounts',
+                        'type' => 'rows',
+                        'target' => 'Account',
+                        'firstDataRow' => 2,
+                        'columns' => new Map<String, String>{
+                            'A' => 'Name',
+                            'B' => 'AccountNumber'
+                        }
+                    },
+                    new Map<String, Object>{
+                        'sectionName' => 'contacts',
+                        'type' => 'rows',
+                        'target' => 'Contact',
+                        'firstDataRow' => 5,
+                        'columns' => new Map<String, String>{
+                            'A' => 'LastName',
+                            'B' => 'Email'
+                        }
+                    }
+                }
+            }
+        );
+    }
+
+    /** Matches CaseComment on its parent Case - an object with no name field to list matches by. */
+    private static String caseCommentTemplate() {
+        return JSON.serialize(
+            new Map<String, Object>{
+                'mode' => 'Partial Success',
+                'sections' => new List<Object>{
+                    new Map<String, Object>{
+                        'type' => 'rows',
+                        'target' => 'CaseComment',
+                        'firstDataRow' => 2,
+                        'columns' => new Map<String, String>{
+                            'A' => 'ParentId',
+                            'B' => 'CommentBody'
+                        },
+                        'matchOn' => new Map<String, Object>{
+                            'column' => 'A',
+                            'field' => 'ParentId'
+                        }
+                    }
+                }
+            }
+        );
+    }
+
     private static void register(String json) {
         DataImportSpec.jsonOverride = new Map<String, String>{ TEMPLATE => json };
         DataImportSpec.clearCache();
@@ -148,6 +203,16 @@ private class DataImportBatchTest {
             SELECT Body__c
             FROM Data_Import_Chunk__c
             WHERE Job__c = :jobId AND Is_Reject__c = TRUE
+        ];
+    }
+
+    /** The staged input in sequence order, for driving the batch one chunk at a time. */
+    private static List<Data_Import_Chunk__c> stagedChunks(Id jobId) {
+        return [
+            SELECT Id, Sequence__c, First_Row_Number__c, Body__c
+            FROM Data_Import_Chunk__c
+            WHERE Job__c = :jobId AND Is_Reject__c = FALSE
+            ORDER BY Sequence__c ASC
         ];
     }
 
@@ -327,6 +392,80 @@ private class DataImportBatchTest {
         }
     }
 
+    /**
+     * The job keeps the first 1,200 messages and counts the rest. A row past that limit
+     * has no message to carry, but it still has to come back in the reject file.
+     */
+    @isTest
+    static void partialSuccess_moreErrorsThanAreKept_countsThemAllAndHandsEveryRowBack() {
+        System.runAs(DataImportTestUser.get()) {
+            register(
+                simpleTemplate()
+                    .replace('"label"', '"mode":"Partial Success","abortAfterErrors":5000,"label"')
+            );
+            List<String> lines = new List<String>{ 'Name,Number,Staff' };
+            for (Integer i = 0; i < 1201; i++) {
+                lines.add('x,,lots');
+            }
+            Id jobId = newJob(TEMPLATE);
+            DataImportJob.stage(jobId, 0, 1, String.join(lines, '\n'));
+
+            Test.startTest();
+            DataImportJob.run(jobId, 1, null);
+            Test.stopTest();
+
+            Data_Import_Job__c job = reload(jobId);
+            Assert.areEqual(1201, job.Error_Count__c, 'every error is counted');
+            Assert.areEqual(1201, job.Rows_Failed__c);
+            Assert.isTrue(job.Errors__c.contains('Row 1201,'), 'the 1,200th message is kept');
+            Assert.isFalse(job.Errors__c.contains('Row 1202,'), 'the 1,201st is not');
+            Assert.isTrue(job.Errors__c.endsWith('and 1 more.'), 'the rest are summarised');
+
+            List<String> rejected = rejectChunks(jobId)[0].Body__c.split('\n');
+            Assert.areEqual(1201, rejected.size(), 'every failed row is handed back');
+            Assert.isTrue(rejected[0].contains('is not a number'), rejected[0]);
+            String last = rejected[rejected.size() - 1];
+            Assert.isTrue(
+                last.contains('Row 1202') && last.contains('could not be imported'),
+                'the row with no kept message still says it failed: ' + last
+            );
+        }
+    }
+
+    /**
+     * A message that quotes a multi-line cell cannot be matched back to its row, so the
+     * reject line falls back to a generic note. The row must still come back, and the
+     * full reason must still be on the job.
+     */
+    @isTest
+    static void partialSuccess_messageSpansLines_rowIsStillHandedBack() {
+        System.runAs(DataImportTestUser.get()) {
+            register(partialSuccessTemplate());
+            Id jobId = newJob(TEMPLATE);
+            DataImportJob.stage(
+                jobId,
+                0,
+                1,
+                'Name,Number,Staff\nAcme,A-1,50\nBeta,B-2,"lo\nts"'
+            );
+
+            Test.startTest();
+            DataImportJob.run(jobId, 1, null);
+            Test.stopTest();
+
+            Data_Import_Job__c job = reload(jobId);
+            Assert.areEqual(1, job.Records_Committed__c);
+            Assert.areEqual(1, job.Rows_Failed__c);
+            Assert.isTrue(job.Errors__c.contains('is not a number'), job.Errors__c);
+
+            List<Data_Import_Chunk__c> rejects = rejectChunks(jobId);
+            Assert.areEqual(1, rejects.size());
+            String body = rejects[0].Body__c;
+            Assert.isTrue(body.contains('"lo\nts"'), 'the cell is re-quoted so it still parses: ' + body);
+            Assert.isTrue(body.contains('Row 3') && body.contains('could not be imported'), body);
+        }
+    }
+
     // ---------------- insert and update ----------------
 
     @isTest
@@ -390,6 +529,65 @@ private class DataImportBatchTest {
             Assert.areEqual(1, job.Rows_Failed__c);
             Assert.isTrue(job.Errors__c.contains('matches 2 existing records'), job.Errors__c);
             Assert.isTrue(job.Errors__c.contains('First'), 'the names are listed: ' + job.Errors__c);
+        }
+    }
+
+    /** Five names are enough to go and look; the rest are counted rather than listed. */
+    @isTest
+    static void matchOn_keyMatchesMoreThanFive_listsFiveAndCountsTheRest() {
+        System.runAs(DataImportTestUser.get()) {
+            List<Account> duplicates = new List<Account>();
+            for (Integer i = 0; i < 6; i++) {
+                duplicates.add(new Account(Name = 'Dup ' + i, AccountNumber = 'A-1'));
+            }
+            insert duplicates;
+            register(matchingTemplate());
+
+            Id jobId = newJob(TEMPLATE);
+            DataImportJob.stage(jobId, 0, 1, 'Name,Number,Site\nAcme,A-1,here');
+
+            Test.startTest();
+            DataImportJob.run(jobId, 1, null);
+            Test.stopTest();
+
+            String errors = reload(jobId).Errors__c;
+            Assert.isTrue(errors.contains('matches 6 existing records'), errors);
+            Assert.areEqual(5, errors.countMatches('Dup '), 'only five are named: ' + errors);
+            Assert.isTrue(errors.contains('and 1 more'), errors);
+            Assert.areEqual(6, [SELECT COUNT() FROM Account], 'nothing was inserted or updated');
+        }
+    }
+
+    /** CaseComment has no name field, so the matches are named by Id instead. */
+    @isTest
+    static void matchOn_targetWithNoNameField_namesTheMatchesById() {
+        System.runAs(DataImportTestUser.get()) {
+            Case parent = new Case(Subject = 'Broken');
+            insert parent;
+            List<CaseComment> comments = new List<CaseComment>{
+                new CaseComment(ParentId = parent.Id, CommentBody = 'First'),
+                new CaseComment(ParentId = parent.Id, CommentBody = 'Second')
+            };
+            insert comments;
+            register(caseCommentTemplate());
+
+            Id jobId = newJob(TEMPLATE);
+            DataImportJob.stage(jobId, 0, 1, 'Case,Comment\n' + parent.Id + ',Updated');
+
+            Test.startTest();
+            DataImportJob.run(jobId, 1, null);
+            Test.stopTest();
+
+            Data_Import_Job__c job = reload(jobId);
+            Assert.areEqual(1, job.Rows_Failed__c);
+            Assert.isTrue(job.Errors__c.contains('matches 2 existing records'), job.Errors__c);
+            Assert.isTrue(job.Errors__c.contains(comments[0].Id), 'listed by Id: ' + job.Errors__c);
+            Assert.isTrue(job.Errors__c.contains(comments[1].Id), 'listed by Id: ' + job.Errors__c);
+            Assert.areEqual(
+                0,
+                [SELECT COUNT() FROM CaseComment WHERE CommentBody = 'Updated'],
+                'neither comment was overwritten'
+            );
         }
     }
 
@@ -472,6 +670,197 @@ private class DataImportBatchTest {
         }
     }
 
+    /** A parentId that is not a $binding is the parent itself. */
+    @isTest
+    static void broadcast_literalParentId_appliesToThatParentsChildren() {
+        System.runAs(DataImportTestUser.get()) {
+            Account parent = new Account(Name = 'Parent');
+            insert parent;
+            insert new Contact(LastName = 'One', AccountId = parent.Id);
+            register(broadcastTemplate().replace('$accountId', parent.Id));
+
+            Id jobId = newJob(TEMPLATE);
+            DataImportJob.stage(jobId, 0, 1, 'Title\nDirector');
+
+            Test.startTest();
+            DataImportJob.run(jobId, 1, null);
+            Test.stopTest();
+
+            Assert.areEqual(
+                'Director',
+                [SELECT Title FROM Contact WHERE AccountId = :parent.Id LIMIT 1].Title
+            );
+        }
+    }
+
+    /**
+     * A row that also fills in the parent lookup must not move the children. The carrier
+     * record has it because it was built to be inserted, not to re-parent anything.
+     */
+    @isTest
+    static void broadcast_rowFillsTheParentField_doesNotReparentTheChildren() {
+        System.runAs(DataImportTestUser.get()) {
+            Account parent = new Account(Name = 'Parent');
+            Account other = new Account(Name = 'Other');
+            insert new List<Account>{ parent, other };
+            insert new List<Contact>{
+                new Contact(LastName = 'One', AccountId = parent.Id),
+                new Contact(LastName = 'Two', AccountId = parent.Id)
+            };
+            register(
+                broadcastTemplate().replace('{"A":"Title"}', '{"A":"Title","B":"AccountId"}')
+            );
+
+            Id jobId = newJob(
+                TEMPLATE,
+                JSON.serialize(new Map<String, Object>{ 'accountId' => parent.Id })
+            );
+            DataImportJob.stage(jobId, 0, 1, 'Title,Account\nDirector,' + other.Id);
+
+            Test.startTest();
+            DataImportJob.run(jobId, 1, null);
+            Test.stopTest();
+
+            Assert.areEqual(
+                2,
+                [SELECT COUNT() FROM Contact WHERE AccountId = :parent.Id AND Title = 'Director'],
+                'the answers were applied and both children stayed where they were'
+            );
+            Assert.areEqual(0, [SELECT COUNT() FROM Contact WHERE AccountId = :other.Id]);
+        }
+    }
+
+    /**
+     * One source row reached two children and both updates failed. That is one row
+     * failed and one line in the reject file, not one per child.
+     */
+    @isTest
+    static void broadcast_childUpdatesFail_failsTheSourceRowOnce() {
+        System.runAs(DataImportTestUser.get()) {
+            Account parent = new Account(Name = 'Parent');
+            insert parent;
+            insert new List<Contact>{
+                new Contact(LastName = 'One', AccountId = parent.Id),
+                new Contact(LastName = 'Two', AccountId = parent.Id)
+            };
+            // The walker takes any text for an email; the platform rejects it at update.
+            register(broadcastTemplate().replace('"Title"', '"Email"'));
+
+            Id jobId = newJob(
+                TEMPLATE,
+                JSON.serialize(new Map<String, Object>{ 'accountId' => parent.Id })
+            );
+            DataImportJob.stage(jobId, 0, 1, 'Email\nnot-an-email');
+
+            Test.startTest();
+            DataImportJob.run(jobId, 1, null);
+            Test.stopTest();
+
+            Data_Import_Job__c job = reload(jobId);
+            Assert.areEqual(1, job.Rows_Failed__c, 'one source row, however many children');
+            Assert.areEqual(2, job.Error_Count__c, 'each child reports its own error');
+            Assert.areEqual(0, job.Records_Committed__c);
+            Assert.isTrue(job.Errors__c.contains('Row 2: '), job.Errors__c);
+
+            List<Data_Import_Chunk__c> rejects = rejectChunks(jobId);
+            Assert.areEqual(1, rejects.size());
+            String body = rejects[0].Body__c;
+            Assert.isFalse(body.contains('\n'), 'the row comes back once: ' + body);
+            Assert.isTrue(body.startsWith('not-an-email,,'), body);
+            Assert.areEqual(0, [SELECT COUNT() FROM Contact WHERE Email != null]);
+        }
+    }
+
+    /** A broadcast with no parent to look under is a broken template, not a bad row. */
+    @isTest
+    static void broadcast_parentIdBlank_throwsNamingTheTemplate() {
+        System.runAs(DataImportTestUser.get()) {
+            Account parent = new Account(Name = 'Parent');
+            insert parent;
+            insert new Contact(LastName = 'One', AccountId = parent.Id);
+            register(broadcastTemplate().replace('$accountId', ''));
+
+            Id jobId = newJob(TEMPLATE);
+            DataImportJob.stage(jobId, 0, 1, 'Title\nDirector');
+
+            try {
+                new DataImportBatch(jobId, DataImportBatch.PHASE_COMMIT)
+                    .execute(null, stagedChunks(jobId));
+                Assert.fail('a broadcast with no parent must not run');
+            } catch (DataImport.DataImportException e) {
+                Assert.isTrue(e.getMessage().contains('parentId did not resolve'), e.getMessage());
+                Assert.isTrue(e.getMessage().contains(TEMPLATE), e.getMessage());
+            }
+            Assert.areEqual(0, [SELECT COUNT() FROM Contact WHERE Title = 'Director']);
+        }
+    }
+
+    // ---------------- section map ----------------
+
+    /**
+     * With a section map, each row goes to the table that claims it, and a row no range
+     * claims - the second table's heading here - is skipped rather than imported.
+     */
+    @isTest
+    static void sectionMap_namedTables_eachRowGoesToItsSection() {
+        System.runAs(DataImportTestUser.get()) {
+            register(sectionedTemplate());
+            Id jobId = newJob(TEMPLATE);
+            DataImportJob.stage(
+                jobId,
+                0,
+                1,
+                'Name,Number\nAcme,A-1\nBeta,B-2\nLast,Email\nSmith,smith@example.com'
+            );
+            String sectionMap = JSON.serialize(
+                new List<Object>{
+                    new Map<String, Object>{
+                        'sectionName' => 'accounts',
+                        'firstRow' => 2,
+                        'lastRow' => 3
+                    },
+                    new Map<String, Object>{ 'sectionName' => 'contacts', 'firstRow' => 5 }
+                }
+            );
+
+            Test.startTest();
+            DataImportJob.run(jobId, 1, sectionMap);
+            Test.stopTest();
+
+            Data_Import_Job__c job = reload(jobId);
+            Assert.areEqual('Completed', job.Status__c);
+            Assert.areEqual(3, job.Rows_Read__c, 'the heading between the tables is not a row');
+            Assert.areEqual(2, [SELECT COUNT() FROM Account], 'the heading did not become an account');
+            Assert.areEqual(
+                'smith@example.com',
+                [SELECT Email FROM Contact WHERE LastName = 'Smith' LIMIT 1].Email
+            );
+        }
+    }
+
+    // ---------------- one chunk at a time ----------------
+
+    /**
+     * execute() does not depend on start() having run on the same instance. Without the
+     * template it reloads it from the job, and a job with no bindings gets an empty set.
+     */
+    @isTest
+    static void execute_contextNotLoaded_reloadsItFromTheJob() {
+        System.runAs(DataImportTestUser.get()) {
+            register(simpleTemplate());
+            Id jobId = newJob(TEMPLATE, null);
+            DataImportJob.stage(jobId, 0, 1, 'Name,Number,Staff\nAcme,A-1,50\nBeta,B-2,10');
+
+            new DataImportBatch(jobId, DataImportBatch.PHASE_COMMIT)
+                .execute(null, stagedChunks(jobId));
+
+            Data_Import_Job__c job = reload(jobId);
+            Assert.areEqual(2, job.Rows_Read__c, 'the counters are saved after each chunk');
+            Assert.areEqual(2, job.Records_Committed__c);
+            Assert.areEqual(2, [SELECT COUNT() FROM Account]);
+        }
+    }
+
     // ---------------- abort threshold ----------------
 
     /** A file failing on every row is the wrong file; saying so 400,000 times helps nobody. */
@@ -494,6 +883,41 @@ private class DataImportBatchTest {
             Data_Import_Job__c job = reload(jobId);
             Assert.areEqual('Aborted', job.Status__c);
             Assert.isTrue(job.Message__c.contains('Stopped after'), job.Message__c);
+        }
+    }
+
+    /**
+     * Once a chunk trips the threshold, the chunks after it are not read at all. Under
+     * Partial Success what was written before the stop stays written.
+     */
+    @isTest
+    static void abortAfterErrors_laterChunks_areNotRead() {
+        System.runAs(DataImportTestUser.get()) {
+            register(
+                simpleTemplate()
+                    .replace('"label"', '"mode":"Partial Success","abortAfterErrors":1,"label"')
+            );
+            Id jobId = newJob(TEMPLATE);
+            DataImportJob.stage(jobId, 0, 1, 'Name,Number,Staff\nAcme,A-1,50\nBeta,B-2,lots');
+            DataImportJob.stage(jobId, 1, 4, 'Gamma,C-3,7');
+
+            // Driven chunk by chunk, the way the platform calls a batch with scope 1.
+            DataImportBatch batch = new DataImportBatch(jobId, DataImportBatch.PHASE_COMMIT);
+            batch.start(null);
+            for (Data_Import_Chunk__c chunk : stagedChunks(jobId)) {
+                batch.execute(null, new List<Data_Import_Chunk__c>{ chunk });
+            }
+            batch.finish(null);
+
+            Data_Import_Job__c job = reload(jobId);
+            Assert.areEqual('Aborted', job.Status__c);
+            Assert.areEqual(2, job.Rows_Read__c, 'the second chunk was never read');
+            Assert.isTrue(job.Message__c.contains('were kept'), job.Message__c);
+            Assert.areEqual(
+                'Acme',
+                [SELECT Name FROM Account].Name,
+                'only the row before the stop was written'
+            );
         }
     }
 }

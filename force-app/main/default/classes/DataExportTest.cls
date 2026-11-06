@@ -6,7 +6,8 @@
 *                Data_Export__mdt and Data_Export_Sheet__mdt cannot be inserted in test
 *                context, so configuration is assigned to the controller's
 *                mockExports / mockSheets. The unknown-name tests leave them null so
-*                the real metadata queries still execute.
+*                the real metadata queries still execute, and the example-export test
+*                reads the Example_Account_Overview records deployed with the package.
 * Created On   : 2026-11-06
 *
 * Class under test : DataExport
@@ -16,6 +17,7 @@
 * Developer        Date          Description
 * ----------------------------------------------------------------------
 * Dalton Wilt      2026-11-06    Initial implementation.
+* Dalton Wilt      2026-11-06    Cover the remaining DataExport paths.
 **********************************************************************************/
 
 @isTest
@@ -156,6 +158,34 @@ public class DataExportTest {
     }
   }
 
+  /**
+   * With no mocks set, the export and its sheets come from the Example_Account_Overview records
+   * deployed with the package, sheets ordered by Sort_Order__c.
+   */
+  @isTest
+  static void getExport_readsTheDeployedExampleExport() {
+    DataExport.ExportDefinition definition = DataExport.getExport(
+      'Example_Account_Overview'
+    );
+
+    System.assertEquals('Example Account Overview', definition.label);
+    System.assertEquals('Account Overview {date}', definition.zipFileName);
+    List<String> names = new List<String>();
+    for (DataExport.SheetDefinition item : definition.sheets) {
+      names.add(item.developerName);
+    }
+    System.assertEquals(
+      new List<String>{
+        'Example_Accounts',
+        'Example_Contacts',
+        'Example_Open_Opportunities'
+      },
+      names
+    );
+    System.assertEquals('Accounts {date}', definition.sheets[0].fileName);
+    System.assertEquals('Opportunities {date}', definition.sheets[2].fileName);
+  }
+
   @isTest
   static void getExport_refusesAnExportWithNoSheets() {
     DataExport.mockExports = new List<Data_Export__mdt>{
@@ -270,6 +300,30 @@ public class DataExportTest {
     System.assertEquals(null, data.rows[0][1]);
   }
 
+  /**
+   * A path through two lookups: Account has no field named "Owner", only a relationship, so the
+   * second hop is found among the target's relationships rather than its fields.
+   */
+  @isTest
+  static void getSheetData_walksALookupOfALookup() {
+    useSheets(
+      new List<Data_Export_Sheet__mdt>{
+        sheet('Contacts', 'Contact', 'LastName, Account.Owner.Name', 'LastName = \'Ng\'')
+      }
+    );
+
+    DataExport.SheetData data = DataExport.getSheetData(
+      'Contacts',
+      null
+    );
+
+    System.assert(
+      data.columns[1].label.startsWith('Account: Owner: '),
+      'each lookup on the way names the column: ' + data.columns[1].label
+    );
+    System.assertEquals(UserInfo.getName(), data.rows[0][1]);
+  }
+
   @isTest
   static void getSheetData_selectsARepeatedFieldOnce() {
     useSheets(
@@ -327,8 +381,10 @@ public class DataExportTest {
     useSheets(
       new List<Data_Export_Sheet__mdt>{
         sheet('BadObject', 'Not_An_Object__c', 'Name', null),
+        sheet('NoObject', null, 'Name', null),
         sheet('BadField', 'Account', 'Name, Nope__c', null),
         sheet('BadLookup', 'Account', 'Nowhere.Name', null),
+        sheet('BadLookupField', 'Account', 'Owner.Nope__c', null),
         sheet('BadPath', 'Account', 'Name; DELETE', null),
         sheet('Compound', 'Account', 'BillingAddress', null),
         sheet('BadFilter', 'Account', 'Name', 'Name ==== 1'),
@@ -337,8 +393,13 @@ public class DataExportTest {
     );
 
     System.assert(failureOf('BadObject', null).contains('not an object'));
+    System.assert(failureOf('NoObject', null).contains('records of "", which is not an object'));
     System.assert(failureOf('BadField', null).contains('no field named "Nope__c"'));
     System.assert(failureOf('BadLookup', null).contains('no relationship named "Nowhere"'));
+    // No target of the lookup has the field, so the message names the first target.
+    System.assert(
+      failureOf('BadLookupField', null).contains('User has no field named "Nope__c"')
+    );
     System.assert(failureOf('BadPath', null).contains('not a field name'));
     System.assert(failureOf('Compound', null).contains('compound field'));
     System.assert(failureOf('BadFilter', null).contains('could not be read'));

@@ -101,6 +101,11 @@
         <name>ListView</name>
     </types>
     <types>
+        <members>Data_Export_User</members>
+        <members>Data_Import_User</members>
+        <name>PermissionSet</name>
+    </types>
+    <types>
         <members>exceljs</members>
         <members>jszip</members>
         <members>papaparse</members>

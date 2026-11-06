@@ -3,12 +3,13 @@
     Download the sample file, then import it. Row 4 has an unreadable employee count, so it comes
     back in a file of rows to fix while the other rows import.
   </p>
-  <lightning-button
-    class="slds-var-m-bottom_medium"
-    label="Download sample CSV"
-    icon-name="utility:download"
-    onclick={handleDownloadSample}
-  ></lightning-button>
+  <div class="slds-var-m-bottom_medium">
+    <lightning-button
+      label="Download sample CSV"
+      icon-name="utility:download"
+      onclick={handleDownloadSample}
+    ></lightning-button>
+  </div>
   <!-- saveFile downloads through an anchor in this template, which works under Lightning Web Security. -->
   <a class="sample-download slds-hide" aria-hidden="true">download</a>
 

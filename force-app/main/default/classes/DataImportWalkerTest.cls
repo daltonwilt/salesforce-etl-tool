@@ -29,6 +29,7 @@
 * ----------------------------------------------------------------------
 * Dalton Wilt      2026-08-20    Split out of DataImportFrameworkTest.
 * Dalton Wilt      2026-11-06    Run as DataImportTestUser, with Data_Import_User.
+* Dalton Wilt      2026-11-06    Cover the remaining DataImportWalker paths.
 **********************************************************************************/
 
 @isTest
@@ -180,6 +181,71 @@ private class DataImportWalkerTest {
             Assert.isTrue(outcome.errors[0].contains('column C'), outcome.errors[0]);
             Assert.isTrue(outcome.rows[0].failed, 'the row must not be written');
             Assert.areEqual(0, outcome.usable().size());
+        }
+    }
+
+    /** A blank line inside a table is skipped, and the rows after it keep their own numbers. */
+    @isTest
+    static void walk_blankRowInsideASection_isSkipped() {
+        System.runAs(DataImportTestUser.get()) {
+            register(simpleTemplate());
+
+            DataImportWalker.Outcome outcome = walkerFor(TEMPLATE)
+                .walk(DataImport.parse('Name,Number,Staff\nAcme,A-1,50\n,,\nBeta,B-2,10'), 1);
+
+            Assert.areEqual(2, outcome.rows.size(), 'the blank row is not a record');
+            Assert.areEqual(0, outcome.errors.size());
+            Assert.areEqual(2, outcome.rows[0].rowNumber);
+            Assert.areEqual(4, outcome.rows[1].rowNumber);
+            Assert.areEqual('Beta', outcome.rows[1].record.get('Name'));
+        }
+    }
+
+    /** A column key that is not a spreadsheet letter maps nothing, rather than failing the row. */
+    @isTest
+    static void walk_columnKeyThatIsNotALetter_isIgnored() {
+        System.runAs(DataImportTestUser.get()) {
+            register(simpleTemplate().replace('"B":', '"2":'));
+
+            DataImportWalker.Outcome outcome = walkerFor(TEMPLATE)
+                .walk(DataImport.parse('Acme,A-1,50'), 2);
+
+            Assert.areEqual(0, outcome.errors.size());
+            Assert.areEqual('Acme', outcome.rows[0].record.get('Name'));
+            Assert.isNull(outcome.rows[0].record.get('AccountNumber'));
+            Assert.areEqual(50, outcome.rows[0].record.get('NumberOfEmployees'));
+        }
+    }
+
+    /**
+     * Defaults are a literal, a `$binding` resolved from the job, or blank - and a blank
+     * one writes nothing rather than an empty string.
+     */
+    @isTest
+    static void walk_sectionDefaults_stampLiteralsAndBindings() {
+        System.runAs(DataImportTestUser.get()) {
+            Map<String, Object> definition = (Map<String, Object>) JSON.deserializeUntyped(simpleTemplate());
+            ((Map<String, Object>) ((List<Object>) definition.get('sections'))[0]).put(
+                'defaults',
+                new Map<String, String>{
+                    'Description' => 'Imported',
+                    'Site' => '$site',
+                    'Industry' => ''
+                }
+            );
+            register(JSON.serialize(definition));
+            DataImportWalker walker = new DataImportWalker(
+                DataImportSpec.load(TEMPLATE),
+                null,
+                new Map<String, Object>{ 'site' => 'Head Office' }
+            );
+
+            DataImportWalker.Outcome outcome = walker.walk(DataImport.parse('Acme,A-1,50'), 2);
+
+            SObject record = outcome.rows[0].record;
+            Assert.areEqual('Imported', record.get('Description'));
+            Assert.areEqual('Head Office', record.get('Site'));
+            Assert.isNull(record.get('Industry'));
         }
     }
 
@@ -345,6 +411,26 @@ private class DataImportWalkerTest {
         }
     }
 
+    /** A group with no options selects nothing, and leaves the groups beside it working. */
+    @isTest
+    static void groups_groupWithNoOptions_isSkipped() {
+        System.runAs(DataImportTestUser.get()) {
+            Map<String, Object> definition = (Map<String, Object>) JSON.deserializeUntyped(
+                groupedTemplate('Name')
+            );
+            Map<String, Object> section = (Map<String, Object>) ((List<Object>) definition.get('sections'))[0];
+            ((List<Object>) section.get('groups')).add(new Map<String, Object>{ 'field' => 'Site' });
+            register(JSON.serialize(definition));
+
+            DataImportWalker.Outcome outcome = walkerFor(TEMPLATE)
+                .walk(DataImport.parse('Acme,Yes,No'), 1);
+
+            Assert.areEqual(0, outcome.errors.size());
+            Assert.areEqual('Alpha', outcome.rows[0].record.get('Description'));
+            Assert.isNull(outcome.rows[0].record.get('Site'));
+        }
+    }
+
     // ---------------- encode ----------------
 
     /** A row is handed back as CSV so a failed one can go into a file the user re-uploads. */
@@ -354,6 +440,16 @@ private class DataImportWalkerTest {
             Assert.areEqual(
                 'a,"one, two","say ""hi"""',
                 DataImportWalker.encode(new List<String>{ 'a', 'one, two', 'say "hi"' })
+            );
+        }
+    }
+
+    @isTest
+    static void encode_nullCell_writesAnEmptyField() {
+        System.runAs(DataImportTestUser.get()) {
+            Assert.areEqual(
+                'a,,b',
+                DataImportWalker.encode(new List<String>{ 'a', null, 'b' })
             );
         }
     }

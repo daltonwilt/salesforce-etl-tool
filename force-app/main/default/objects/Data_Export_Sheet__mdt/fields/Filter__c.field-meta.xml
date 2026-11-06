@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Filter__c</fullName>
+    <description>Optional SOQL WHERE clause, without the word WHERE. :recordId is the record the component is placed on and :userId is the running user, e.g. &quot;AccountId = :recordId AND IsClosed = false&quot;. Leave blank to list every record the user can see, up to the Row Limit.</description>
+    <externalId>false</externalId>
+    <fieldManageability>SubscriberControlled</fieldManageability>
+    <inlineHelpText>SOQL conditions without WHERE. Use :recordId for the current record and :userId for the running user.</inlineHelpText>
+    <label>Filter</label>
+    <length>5000</length>
+    <type>LongTextArea</type>
+    <visibleLines>3</visibleLines>
+</CustomField>

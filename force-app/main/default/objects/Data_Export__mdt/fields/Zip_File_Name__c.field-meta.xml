@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Zip_File_Name__c</fullName>
+    <description>When the export produces more than one file, download them together as one zip file with this name instead of as separate files. {date} is replaced with today's date (YYYY-MM-DD). Leave blank to download each file separately.</description>
+    <externalId>false</externalId>
+    <fieldManageability>SubscriberControlled</fieldManageability>
+    <inlineHelpText>Name of a zip file to bundle several files into, e.g. &quot;Account Overview {date}&quot;. Leave blank to download each workbook separately.</inlineHelpText>
+    <label>Zip File Name</label>
+    <length>255</length>
+    <required>false</required>
+    <type>Text</type>
+    <unique>false</unique>
+</CustomField>

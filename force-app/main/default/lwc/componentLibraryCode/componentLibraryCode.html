@@ -1,0 +1,25 @@
+<template>
+  <template lwc:if={hasFiles}>
+    <div class="code-viewer">
+      <lightning-tabset variant="scoped">
+        <template for:each={fileViews} for:item="file">
+          <lightning-tab key={file.name} label={file.name} value={file.name}>
+            <div class="code-toolbar">
+              <span class="code-language">{file.language}</span>
+              <lightning-button-icon
+                icon-name={file.copyIcon}
+                variant="border-filled"
+                size="small"
+                alternative-text={file.copyLabel}
+                title={file.copyLabel}
+                data-name={file.name}
+                onclick={handleCopy}
+              ></lightning-button-icon>
+            </div>
+            <pre class="code"><code>{file.source}</code></pre>
+          </lightning-tab>
+        </template>
+      </lightning-tabset>
+    </div>
+  </template>
+</template>

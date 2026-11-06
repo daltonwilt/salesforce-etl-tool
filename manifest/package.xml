@@ -89,6 +89,7 @@
         <name>Layout</name>
     </types>
     <types>
+        <members>componentLibraryCode</members>
         <members>csv</members>
         <members>dataExport</members>
         <members>dataImport</members>

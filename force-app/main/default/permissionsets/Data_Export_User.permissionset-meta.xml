@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PermissionSet xmlns="http://soap.sforce.com/2006/04/metadata">
+    <classAccesses>
+        <apexClass>DataExport</apexClass>
+        <enabled>true</enabled>
+    </classAccesses>
+    <customMetadataTypeAccesses>
+        <enabled>true</enabled>
+        <name>Data_Export_Sheet__mdt</name>
+    </customMetadataTypeAccesses>
+    <customMetadataTypeAccesses>
+        <enabled>true</enabled>
+        <name>Data_Export__mdt</name>
+    </customMetadataTypeAccesses>
+    <description>Download exports with c-data-export: run DataExport and read export configuration. Records are read as the user, so the exported objects and fields need their own access.</description>
+    <hasActivationRequired>false</hasActivationRequired>
+    <label>Data Export User</label>
+</PermissionSet>

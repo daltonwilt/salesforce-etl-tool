@@ -11,6 +11,7 @@
         <members>DataImportSpec</members>
         <members>DataImportSpecTest</members>
         <members>DataImportTest</members>
+        <members>DataImportTestUser</members>
         <members>DataImportWalker</members>
         <members>DataImportWalkerTest</members>
         <name>ApexClass</name>
@@ -99,6 +100,11 @@
         <members>Data_Import_Chunk__c.All</members>
         <members>Data_Import_Job__c.All</members>
         <name>ListView</name>
+    </types>
+    <types>
+        <members>Data_Export_User</members>
+        <members>Data_Import_User</members>
+        <name>PermissionSet</name>
     </types>
     <types>
         <members>exceljs</members>

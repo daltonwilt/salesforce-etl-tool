@@ -13,11 +13,11 @@ import { sliceFile } from "./csvStream";
 /**
  * Loads a CSV into any object, from any template, with no ceiling on the number of rows.
  *
- *   <c-g_-data-importer
+ *   <c-data-importer
  *     template="SLFRF_Equipment"
  *     bindings={bindings}
  *     onimported={handleImported}>
- *   </c-g_-data-importer>
+ *   </c-data-importer>
  *
  * The file is read HERE and never reaches Apex whole. That is the single decision the whole design
  * rests on: `VersionData.toString()` on the server puts the file in a 12 MB heap alongside the rows

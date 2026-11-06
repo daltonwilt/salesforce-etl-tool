@@ -23,6 +23,7 @@
 * Dalton Wilt      2026-08-20    Split out of DataImportHelperTest.
 * Dalton Wilt      2026-08-20    Coerced object moved from SF_428S_Equipment__c to
 *                                Opportunity, so the suite rests on no program schema.
+* Dalton Wilt      2026-11-06    Cover the remaining DataImport paths.
 **********************************************************************************/
 
 @isTest
@@ -196,6 +197,32 @@ private class DataImportTest {
         Assert.isTrue(errors[0].contains('last March'), errors[0]);
     }
 
+    /** A Date/Time column takes the same MM/DD/YYYY a recipient types, as midnight on that day. */
+    @isTest
+    static void coerce_dateIntoDatetimeField_returnsMidnight() {
+        List<String> errors = new List<String>();
+
+        Object value = coercer().coerce('CreatedDate', '03/09/2026', 'Row 8', errors);
+
+        Assert.areEqual(
+            Datetime.newInstance(Date.newInstance(2026, 3, 9), Time.newInstance(0, 0, 0, 0)),
+            value
+        );
+        Assert.areEqual(0, errors.size());
+    }
+
+    @isTest
+    static void coerce_unreadableDatetime_reportsRowAndColumn() {
+        List<String> errors = new List<String>();
+
+        Object value = coercer().coerce('CreatedDate', 'last March', 'Row 8', errors);
+
+        Assert.isNull(value);
+        Assert.areEqual(1, errors.size());
+        Assert.isTrue(errors[0].startsWith('Row 8, '), errors[0]);
+        Assert.isTrue(errors[0].contains('is not a date'), errors[0]);
+    }
+
     /** Currency columns arrive as text, so they carry whatever Excel formatted them with. */
     @isTest
     static void coerce_currencyAsExcelLeavesIt_returnsDecimal() {
@@ -228,6 +255,22 @@ private class DataImportTest {
         Assert.isTrue(errors[0].contains('is not a number'), errors[0]);
     }
 
+    /**
+     * Opportunity has no Long field, so ContentVersion's ContentSizeLong - a standard Long
+     * on every org - stands in. A Long field is rounded to a whole number, as an Integer is.
+     */
+    @isTest
+    static void coerce_longField_returnsRoundedLong() {
+        List<String> errors = new List<String>();
+
+        Object value = new DataImport.Coercer(ContentVersion.SObjectType)
+            .coerce('ContentSizeLong', '1,234.5', 'Row 8', errors);
+
+        Assert.isInstanceOfType(value, Long.class);
+        Assert.areEqual(1235L, value);
+        Assert.areEqual(0, errors.size());
+    }
+
     /** Matched case-insensitively but stored in the picklist's own casing, or the platform rejects it. */
     @isTest
     static void coerce_picklistWrongCase_returnsPicklistCasing() {
@@ -253,6 +296,23 @@ private class DataImportTest {
         Assert.areEqual(1, errors.size());
         Assert.isTrue(errors[0].contains('allowed values'), errors[0]);
         Assert.isTrue(errors[0].contains(stage()), errors[0]);
+    }
+
+    /**
+     * A picklist with no active values gives nothing to check against, so the cell goes
+     * through as written and the platform has the last word. Order.Type ships with no
+     * values; an org that has given it some cannot set this up, so the test stands down.
+     */
+    @isTest
+    static void coerce_picklistWithNoValues_returnsTextAsWritten() {
+        List<String> errors = new List<String>();
+        DataImport.Coercer c = new DataImport.Coercer(Order.SObjectType);
+        if (!c.allowedValues('Type').isEmpty()) {
+            return;
+        }
+
+        Assert.areEqual('Anything', c.coerce('Type', ' Anything ', 'Row 8', errors));
+        Assert.areEqual(0, errors.size());
     }
 
     @isTest
@@ -329,10 +389,24 @@ private class DataImportTest {
         Assert.isNull(DataImport.parseDate(''));
     }
 
+    /** Date.valueOf throws on an ISO date the calendar does not have; that is a bad cell, not a crash. */
+    @isTest
+    static void parseDate_impossibleIsoDate_returnsNull() {
+        Assert.isNull(DataImport.parseDate('2026-02-30'));
+        Assert.isNull(DataImport.parseDate('2026-13-01'));
+    }
+
     @isTest
     static void parseDecimal_unreadable_returnsNull() {
         Assert.isNull(DataImport.parseDecimal('$'));
         Assert.isNull(DataImport.parseDecimal(null));
+    }
+
+    /** Stripping symbols can leave digits that still are not one number, e.g. a version or a range. */
+    @isTest
+    static void parseDecimal_strayPointsOrDashes_returnsNull() {
+        Assert.isNull(DataImport.parseDecimal('1.2.3'));
+        Assert.isNull(DataImport.parseDecimal('10-20'));
     }
 
     @isTest

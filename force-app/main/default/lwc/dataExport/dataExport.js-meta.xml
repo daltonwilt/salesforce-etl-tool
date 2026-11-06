@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<LightningComponentBundle xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>68.0</apiVersion>
+    <isExposed>true</isExposed>
+    <masterLabel>Data Export</masterLabel>
+    <description>A button that downloads Salesforce data as Excel workbooks or CSV files, one table per Data_Export_Sheet__mdt record of the chosen Data_Export__mdt.</description>
+    <targets>
+        <target>lightning__RecordPage</target>
+        <target>lightning__AppPage</target>
+        <target>lightning__HomePage</target>
+    </targets>
+    <targetConfigs>
+        <targetConfig targets="lightning__RecordPage,lightning__AppPage,lightning__HomePage">
+            <property name="exportName" type="String" label="Export" required="true"
+                description="Developer name of the Data Export (Data_Export__mdt) to download. On a record page, sheet filters can use :recordId for this record." />
+            <property name="formats" type="String" label="Formats" default="both"
+                datasource="both,excel,csv"
+                description="both: the button is a menu of Excel and CSV. excel or csv: a single button for that format." />
+            <property name="label" type="String" label="Button label"
+                description="Defaults to Export, or Export to Excel / Export to CSV when one format is offered." />
+            <property name="variant" type="String" label="Button variant" default="neutral"
+                datasource="neutral,brand,brand-outline,success,destructive"
+                description="Applies to the single-format button. The format menu is always neutral." />
+        </targetConfig>
+    </targetConfigs>
+</LightningComponentBundle>

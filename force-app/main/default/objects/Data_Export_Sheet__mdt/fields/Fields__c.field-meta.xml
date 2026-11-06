@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Fields__c</fullName>
+    <description>The sheet's columns, in order, separated by commas or new lines. Each is a field API name or a path through lookups (Account.Owner.Name). The header is the field's label unless one is given with AS: &quot;Owner.Name AS Account Owner&quot;. Fields the running user cannot see are left out.</description>
+    <externalId>false</externalId>
+    <fieldManageability>SubscriberControlled</fieldManageability>
+    <inlineHelpText>Columns in order, comma or line separated. e.g. &quot;Name, Industry, Owner.Name AS Owner, CreatedDate&quot;</inlineHelpText>
+    <label>Fields</label>
+    <length>5000</length>
+    <type>LongTextArea</type>
+    <visibleLines>5</visibleLines>
+</CustomField>

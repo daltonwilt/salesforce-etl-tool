@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<LightningComponentBundle xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>68.0</apiVersion>
+    <isExposed>false</isExposed>
+    <description
+  >Shared LWC helpers (toasts, custom events, error messages, debounce, debug logging). A service module imported by other components; it does not render.</description>
+</LightningComponentBundle>

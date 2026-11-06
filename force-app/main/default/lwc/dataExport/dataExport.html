@@ -1,0 +1,29 @@
+<template>
+  <div class="data-export">
+    <template lwc:if={offersChoice}>
+      <lightning-button-menu label={buttonLabel} alternative-text="Choose a format" disabled={buttonDisabled}
+        onselect={handleSelect}>
+        <template for:each={menuItems} for:item="item">
+          <lightning-menu-item key={item.value} value={item.value} label={item.label}
+            prefix-icon-name={item.icon}></lightning-menu-item>
+        </template>
+      </lightning-button-menu>
+    </template>
+    <template lwc:else>
+      <lightning-button label={buttonLabel} icon-name="utility:download" variant={variant} disabled={buttonDisabled}
+        onclick={handleClick}></lightning-button>
+    </template>
+
+    <template lwc:if={busy}>
+      <p class="export-progress slds-var-m-top_x-small" role="status">{progress}</p>
+    </template>
+
+    <template lwc:if={status}>
+      <p class={statusClass} role="status">{status.message}</p>
+    </template>
+
+    <!-- Downloads go through an anchor in this template rather than one made on document.body,
+         the arrangement that works under Lightning Web Security inside a community. -->
+    <a class="export-anchor" lwc:ref="anchor" hidden></a>
+  </div>
+</template>

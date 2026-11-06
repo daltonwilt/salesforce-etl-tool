@@ -11,6 +11,7 @@
     "test:unit:watch": "sfdx-lwc-jest --watch",
     "test:unit:debug": "sfdx-lwc-jest --debug",
     "test:unit:coverage": "sfdx-lwc-jest --coverage",
+    "vendor": "node scripts/vendor-libraries.js",
     "prepare": "husky || true",
     "precommit": "lint-staged"
   },
@@ -23,8 +24,11 @@
     "eslint": "^9.29.0",
     "eslint-plugin-import": "^2.31.0",
     "eslint-plugin-jest": "^29.17.0",
+    "exceljs": "4.4.0",
     "husky": "^9.1.7",
-    "lint-staged": "^17.6.0"
+    "jszip": "3.10.2",
+    "lint-staged": "^17.6.0",
+    "papaparse": "5.7.0"
   },
   "lint-staged": {
     "**/{aura,lwc}/**/*.js": [

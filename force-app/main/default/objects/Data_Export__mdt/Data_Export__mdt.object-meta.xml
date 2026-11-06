@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <description>One downloadable export for the c-data-export LWC: a set of Data Export Sheets, grouped into one or more files and downloaded as Excel or CSV. Its developer name is the value passed to the component as export-name.</description>
+    <label>Data Export</label>
+    <pluralLabel>Data Exports</pluralLabel>
+    <visibility>Public</visibility>
+</CustomObject>

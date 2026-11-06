@@ -81,6 +81,23 @@ The component can also be placed on record, app and home pages from Lightning Ap
 
 ExcelJS, PapaParse and JSZip are static resources copied from `node_modules`. Their versions are pinned in `package.json`. To upgrade one, change its version, run `npm install`, then `npm run vendor`. The Jest suite fails if the static resources fall out of step.
 
+## Component Library
+
+`componentLibrary` is a reference page for `c-data-import` and `c-data-export`, laid out like the Salesforce component reference: a live **Example**, the **Documentation**, and the full **Specification** (attributes, methods, events). Add it to a Lightning App Page, or create a Lightning Component Tab for it in Setup. Links keep the selection in the URL (`c__component`, `c__tab`).
+
+The examples run against the org:
+
+- **Data Import** creates or updates real Accounts numbered `DEMO-001` to `DEMO-004`, using the `Example_Accounts` import template that deploys from this branch.
+- **Data Export** downloads the `Example_Account_Overview` export, plus a workbook built from data in the example.
+
+Assign `Data_Import_User` and `Data_Export_User` first (see [Grant access](#grant-access)).
+
+To document a new component:
+
+1. Build a runnable demo as its own bundle, `example<Component>`, and add a branch for it in `componentLibraryExample`.
+2. Write `componentLibrary/doc<Component>.js` and list it in `componentLibrary/registry.js`.
+3. Run `npm run snippets` so the Example tab shows the demo's source. The Jest suite fails if this is forgotten.
+
 ## Development
 
 | Command                      | Description                              |
@@ -90,6 +107,7 @@ ExcelJS, PapaParse and JSZip are static resources copied from `node_modules`. Th
 | `npm run test:unit:watch`    | Run Jest tests in watch mode             |
 | `npm run test:unit:coverage` | Run Jest tests with a coverage report    |
 | `npm run vendor`             | Copy pinned libraries into static resources |
+| `npm run snippets`           | Regenerate the component library's example code |
 
 A pre-commit hook (Husky + lint-staged) lints and tests staged LWC files automatically.
 

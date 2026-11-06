@@ -4,8 +4,8 @@ import { saveFile } from "c/utils";
 import { zip } from "c/export";
 import { buildWorkbook } from "c/xlsx";
 import { buildCsv } from "c/csv";
-import getExport from "@salesforce/apex/DataExportController.getExport";
-import getSheetData from "@salesforce/apex/DataExportController.getSheetData";
+import getExport from "@salesforce/apex/DataExport.getExport";
+import getSheetData from "@salesforce/apex/DataExport.getSheetData";
 
 jest.mock("c/utils", () => ({
   ...jest.requireActual("c/utils"),
@@ -24,12 +24,12 @@ jest.mock("c/xlsx", () => ({
 }));
 jest.mock("c/csv", () => ({ buildCsv: jest.fn() }));
 jest.mock(
-  "@salesforce/apex/DataExportController.getExport",
+  "@salesforce/apex/DataExport.getExport",
   () => ({ default: jest.fn() }),
   { virtual: true }
 );
 jest.mock(
-  "@salesforce/apex/DataExportController.getSheetData",
+  "@salesforce/apex/DataExport.getSheetData",
   () => ({ default: jest.fn() }),
   { virtual: true }
 );

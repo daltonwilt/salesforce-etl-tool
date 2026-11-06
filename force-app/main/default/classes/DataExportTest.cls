@@ -1,7 +1,7 @@
 /**********************************************************************************
-* Name         : DataExportControllerTest
+* Name         : DataExportTest
 * Author       : Dalton Wilt
-* Desc         : Tests for DataExportController.
+* Desc         : Tests for DataExport.
 *
 *                Data_Export__mdt and Data_Export_Sheet__mdt cannot be inserted in test
 *                context, so configuration is assigned to the controller's
@@ -9,7 +9,7 @@
 *                the real metadata queries still execute.
 * Created On   : 2026-11-06
 *
-* Class under test : DataExportController
+* Class under test : DataExport
 *
 * Modification Log:
 * ----------------------------------------------------------------------
@@ -19,7 +19,7 @@
 **********************************************************************************/
 
 @isTest
-public class DataExportControllerTest {
+public class DataExportTest {
   private static Data_Export__mdt export(String developerName, String zipName) {
     return new Data_Export__mdt(
       DeveloperName = developerName,
@@ -45,12 +45,12 @@ public class DataExportControllerTest {
   }
 
   private static void useSheets(List<Data_Export_Sheet__mdt> sheets) {
-    DataExportController.mockSheets = sheets;
+    DataExport.mockSheets = sheets;
   }
 
   private static String failureOf(String sheetName, Id recordId) {
     try {
-      DataExportController.getSheetData(sheetName, recordId);
+      DataExport.getSheetData(sheetName, recordId);
     } catch (AuraHandledException e) {
       return e.getMessage();
     }
@@ -79,7 +79,7 @@ public class DataExportControllerTest {
 
   @isTest
   static void getExport_returnsSheetsInOrderWithTheirFiles() {
-    DataExportController.mockExports = new List<Data_Export__mdt>{
+    DataExport.mockExports = new List<Data_Export__mdt>{
       export('Overview', 'Overview {date}')
     };
     Data_Export_Sheet__mdt accounts = sheet('Accounts', 'Account', 'Name', null);
@@ -87,7 +87,7 @@ public class DataExportControllerTest {
     contacts.File_Name__c = 'People';
     useSheets(new List<Data_Export_Sheet__mdt>{ accounts, contacts });
 
-    DataExportController.ExportDefinition definition = DataExportController.getExport(
+    DataExport.ExportDefinition definition = DataExport.getExport(
       'Overview'
     );
 
@@ -104,13 +104,13 @@ public class DataExportControllerTest {
   static void getExport_passesStylesThroughAndReportsBadJsonByRecord() {
     Data_Export__mdt config = export('Styled', null);
     config.Styles__c = ' {"header": {"font": {"bold": true}}} ';
-    DataExportController.mockExports = new List<Data_Export__mdt>{ config };
+    DataExport.mockExports = new List<Data_Export__mdt>{ config };
     Data_Export_Sheet__mdt accounts = sheet('Accounts', 'Account', 'Name', null);
     accounts.Styles__c = '{"tabColor": "FF0B5CAB"}';
     Data_Export_Sheet__mdt contacts = sheet('Contacts', 'Contact', 'Name', null);
     useSheets(new List<Data_Export_Sheet__mdt>{ accounts, contacts });
 
-    DataExportController.ExportDefinition definition = DataExportController.getExport(
+    DataExport.ExportDefinition definition = DataExport.getExport(
       'Styled'
     );
     System.assertEquals('{"header": {"font": {"bold": true}}}', definition.styles);
@@ -119,7 +119,7 @@ public class DataExportControllerTest {
 
     contacts.Styles__c = '{"header": ';
     try {
-      DataExportController.getExport('Styled');
+      DataExport.getExport('Styled');
       System.assert(false, 'expected a failure');
     } catch (AuraHandledException e) {
       System.assert(
@@ -131,9 +131,9 @@ public class DataExportControllerTest {
 
   @isTest
   static void checkedStyles_wantsAJsonObject() {
-    System.assertEquals(null, DataExportController.checkedStyles('  ', 'X'));
+    System.assertEquals(null, DataExport.checkedStyles('  ', 'X'));
     try {
-      DataExportController.checkedStyles('[1, 2]', 'The "X" export');
+      DataExport.checkedStyles('[1, 2]', 'The "X" export');
       System.assert(false, 'expected a failure');
     } catch (AuraHandledException e) {
       System.assert(e.getMessage().contains('not a JSON object'), e.getMessage());
@@ -144,7 +144,7 @@ public class DataExportControllerTest {
   static void getExport_refusesABlankOrUnknownName() {
     for (String name : new List<String>{ null, '', 'No_Such_Export_Xyz' }) {
       try {
-        DataExportController.getExport(name);
+        DataExport.getExport(name);
         System.assert(false, 'expected a failure for ' + name);
       } catch (AuraHandledException e) {
         System.assert(
@@ -158,13 +158,13 @@ public class DataExportControllerTest {
 
   @isTest
   static void getExport_refusesAnExportWithNoSheets() {
-    DataExportController.mockExports = new List<Data_Export__mdt>{
+    DataExport.mockExports = new List<Data_Export__mdt>{
       export('Empty', null)
     };
     useSheets(new List<Data_Export_Sheet__mdt>());
 
     try {
-      DataExportController.getExport('Empty');
+      DataExport.getExport('Empty');
       System.assert(false, 'expected a failure');
     } catch (AuraHandledException e) {
       System.assert(e.getMessage().contains('has no sheets'), e.getMessage());
@@ -186,13 +186,13 @@ public class DataExportControllerTest {
       }
     );
 
-    DataExportController.SheetData data = DataExportController.getSheetData(
+    DataExport.SheetData data = DataExport.getSheetData(
       'Accounts',
       null
     );
 
     List<String> types = new List<String>();
-    for (DataExportController.Column column : data.columns) {
+    for (DataExport.Column column : data.columns) {
       types.add(column.type);
     }
     System.assertEquals(
@@ -224,7 +224,7 @@ public class DataExportControllerTest {
       }
     );
 
-    DataExportController.SheetData data = DataExportController.getSheetData(
+    DataExport.SheetData data = DataExport.getSheetData(
       'Accounts',
       null
     );
@@ -241,9 +241,9 @@ public class DataExportControllerTest {
         sheet('Contacts', 'Contact', 'LastName, Account.Name', 'AccountId = :recordId')
       }
     );
-    DataExportController.mockSheets[0].Order_By__c = 'LastName';
+    DataExport.mockSheets[0].Order_By__c = 'LastName';
 
-    DataExportController.SheetData data = DataExportController.getSheetData(
+    DataExport.SheetData data = DataExport.getSheetData(
       'Contacts',
       acmeId
     );
@@ -262,7 +262,7 @@ public class DataExportControllerTest {
       }
     );
 
-    DataExportController.SheetData data = DataExportController.getSheetData(
+    DataExport.SheetData data = DataExport.getSheetData(
       'Contacts',
       null
     );
@@ -278,7 +278,7 @@ public class DataExportControllerTest {
       }
     );
 
-    DataExportController.SheetData data = DataExportController.getSheetData(
+    DataExport.SheetData data = DataExport.getSheetData(
       'Accounts',
       null
     );
@@ -294,7 +294,7 @@ public class DataExportControllerTest {
     accounts.Order_By__c = 'Name';
     useSheets(new List<Data_Export_Sheet__mdt>{ accounts });
 
-    DataExportController.SheetData data = DataExportController.getSheetData(
+    DataExport.SheetData data = DataExport.getSheetData(
       'Accounts',
       null
     );
@@ -311,14 +311,14 @@ public class DataExportControllerTest {
     useSheets(new List<Data_Export_Sheet__mdt>{ accounts });
 
     System.assertEquals(
-      DataExportController.DEFAULT_ROW_LIMIT,
-      DataExportController.getSheetData('Accounts', null).rowLimit
+      DataExport.DEFAULT_ROW_LIMIT,
+      DataExport.getSheetData('Accounts', null).rowLimit
     );
 
     accounts.Row_Limit__c = 99999;
     System.assertEquals(
-      DataExportController.MAX_ROW_LIMIT,
-      DataExportController.getSheetData('Accounts', null).rowLimit
+      DataExport.MAX_ROW_LIMIT,
+      DataExport.getSheetData('Accounts', null).rowLimit
     );
   }
 
@@ -387,7 +387,7 @@ public class DataExportControllerTest {
 
   @isTest
   static void parseFields_splitsOnCommasAndLinesAndReadsHeaders() {
-    List<DataExportController.ColumnSpec> specs = DataExportController.parseFields(
+    List<DataExport.ColumnSpec> specs = DataExport.parseFields(
       ' Name ,\r\nOwner.Name AS Owner\n\nCreatedDate as  Created On, '
     );
 
@@ -397,20 +397,20 @@ public class DataExportControllerTest {
     System.assertEquals('Owner.Name', specs[1].path);
     System.assertEquals('Owner', specs[1].header);
     System.assertEquals('Created On', specs[2].header);
-    System.assertEquals(0, DataExportController.parseFields(null).size());
+    System.assertEquals(0, DataExport.parseFields(null).size());
   }
 
   @isTest
   static void columnType_mapsEachFieldType() {
-    System.assertEquals('currency', DataExportController.columnType(Schema.DisplayType.CURRENCY));
-    System.assertEquals('percent', DataExportController.columnType(Schema.DisplayType.PERCENT));
-    System.assertEquals('integer', DataExportController.columnType(Schema.DisplayType.INTEGER));
-    System.assertEquals('integer', DataExportController.columnType(Schema.DisplayType.LONG));
-    System.assertEquals('number', DataExportController.columnType(Schema.DisplayType.DOUBLE));
-    System.assertEquals('date', DataExportController.columnType(Schema.DisplayType.DATE));
-    System.assertEquals('datetime', DataExportController.columnType(Schema.DisplayType.DATETIME));
-    System.assertEquals('boolean', DataExportController.columnType(Schema.DisplayType.BOOLEAN));
-    System.assertEquals('text', DataExportController.columnType(Schema.DisplayType.PICKLIST));
+    System.assertEquals('currency', DataExport.columnType(Schema.DisplayType.CURRENCY));
+    System.assertEquals('percent', DataExport.columnType(Schema.DisplayType.PERCENT));
+    System.assertEquals('integer', DataExport.columnType(Schema.DisplayType.INTEGER));
+    System.assertEquals('integer', DataExport.columnType(Schema.DisplayType.LONG));
+    System.assertEquals('number', DataExport.columnType(Schema.DisplayType.DOUBLE));
+    System.assertEquals('date', DataExport.columnType(Schema.DisplayType.DATE));
+    System.assertEquals('datetime', DataExport.columnType(Schema.DisplayType.DATETIME));
+    System.assertEquals('boolean', DataExport.columnType(Schema.DisplayType.BOOLEAN));
+    System.assertEquals('text', DataExport.columnType(Schema.DisplayType.PICKLIST));
   }
 
   @isTest
@@ -428,7 +428,7 @@ public class DataExportControllerTest {
       }
     );
 
-    DataExportController.SheetData data = DataExportController.getSheetData(
+    DataExport.SheetData data = DataExport.getSheetData(
       'Opps',
       opp.Id
     );

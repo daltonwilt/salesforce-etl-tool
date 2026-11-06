@@ -58,7 +58,7 @@ The component can also be placed on record, app and home pages from Lightning Ap
 
 | Bundle | Role |
 | --- | --- |
-| `dataExport` | The button: fetches each sheet from `DataExportController`, then builds and downloads the files |
+| `dataExport` | The button: fetches each sheet from `DataExport`, then builds and downloads the files |
 | `xlsx` | Excel workbooks and styling, with ExcelJS |
 | `csv` | CSV files, with PapaParse |
 | `export` | What both formats share: library loading, value and time zone conversion, zipping (JSZip) |

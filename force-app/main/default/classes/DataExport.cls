@@ -1,5 +1,5 @@
 /**********************************************************************************
-* Name         : DataExportController
+* Name         : DataExport
 * Author       : Dalton Wilt
 * Desc         : Reads Data_Export__mdt / Data_Export_Sheet__mdt configuration and the
 *                SObject data each sheet lists, for the c-data-export LWC. The
@@ -7,7 +7,7 @@
 *                c/csv); this class only answers "which sheets, styled how" and
 *                "what rows".
 * Created On   : 2026-11-06
-* Test classes : DataExportControllerTest
+* Test classes : DataExportTest
 *
 * Sharing      : with sharing, and every data query runs in USER_MODE - an export
 *                must never show a user a record or field they could not open in the
@@ -22,7 +22,7 @@
 * Dalton Wilt      2026-11-06    Initial implementation.
 **********************************************************************************/
 
-public with sharing class DataExportController {
+public with sharing class DataExport {
   @TestVisible
   private static final Integer DEFAULT_ROW_LIMIT = 10000;
 

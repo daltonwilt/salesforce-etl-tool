@@ -4,8 +4,8 @@ import { errorMessage, logError, saveFile } from "c/utils";
 import { zip } from "c/export";
 import { buildWorkbook, mergeStyles } from "c/xlsx";
 import { buildCsv } from "c/csv";
-import getExport from "@salesforce/apex/DataExportController.getExport";
-import getSheetData from "@salesforce/apex/DataExportController.getSheetData";
+import getExport from "@salesforce/apex/DataExport.getExport";
+import getSheetData from "@salesforce/apex/DataExport.getSheetData";
 
 /**
  * A button that downloads Salesforce data as Excel workbooks or CSV files, laid out by
@@ -22,7 +22,7 @@ import getSheetData from "@salesforce/apex/DataExportController.getSheetData";
  * CSV, which has no sheets, every sheet is its own file (c/csv, on PapaParse). Either way the
  * values are the same: c/export reads them for both.
  *
- * The data is read by DataExportController, as the running user, and the files are built in the
+ * The data is read by DataExport, as the running user, and the files are built in the
  * browser, so nothing is left behind in the org.
  *
  * Hosts with their own data skip the configuration: with no export-name, the button downloads
@@ -345,7 +345,7 @@ export default class DataExport extends LightningElement {
 /* ── Helpers ──────────────────────────────────────────────────────────────────────────────────── */
 
 /**
- * Styles JSON from configuration as an object. DataExportController has already checked it
+ * Styles JSON from configuration as an object. DataExport has already checked it
  * parses; this guards against a payload that did not come through it.
  */
 function parseStyles(json, owner) {

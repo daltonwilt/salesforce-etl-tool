@@ -1,0 +1,26 @@
+<template>
+  <p class="slds-var-m-bottom_small slds-text-body_regular">
+    Download the sample file, then import it. Row 4 has an unreadable employee count, so it comes
+    back in a file of rows to fix while the other rows import.
+  </p>
+  <lightning-button
+    class="slds-var-m-bottom_medium"
+    label="Download sample CSV"
+    icon-name="utility:download"
+    onclick={handleDownloadSample}
+  ></lightning-button>
+  <!-- saveFile downloads through an anchor in this template, which works under Lightning Web Security. -->
+  <a class="sample-download slds-hide" aria-hidden="true">download</a>
+
+  <c-data-import
+    template-name="Example_Accounts"
+    label="Import accounts"
+    onimported={handleImported}
+  ></c-data-import>
+
+  <template lwc:if={result}>
+    <p class="slds-var-m-top_small slds-text-body_small">
+      {result.status}: {result.committed} saved, {result.failed} to fix
+    </p>
+  </template>
+</template>

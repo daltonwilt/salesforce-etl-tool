@@ -92,6 +92,8 @@
         <members>csv</members>
         <members>dataExport</members>
         <members>dataImport</members>
+        <members>exampleDataExport</members>
+        <members>exampleDataImport</members>
         <members>export</members>
         <members>utils</members>
         <members>xlsx</members>

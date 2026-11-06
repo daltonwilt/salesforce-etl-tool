@@ -1,0 +1,34 @@
+<template>
+  <div class="slds-grid slds-wrap slds-gutters_small">
+    <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-var-m-bottom_medium">
+      <h3 class="slds-text-heading_small slds-var-m-bottom_x-small">From configuration</h3>
+      <p class="slds-var-m-bottom_small slds-text-body_small">
+        The Example_Account_Overview export: accounts, contacts and open opportunities, read as you.
+      </p>
+      <c-data-export
+        export-name="Example_Account_Overview"
+        onexported={handleExported}
+        onexporterror={handleError}
+      ></c-data-export>
+    </div>
+
+    <div class="slds-col slds-size_1-of-1 slds-medium-size_1-of-2 slds-var-m-bottom_medium">
+      <h3 class="slds-text-heading_small slds-var-m-bottom_x-small">From the page's own data</h3>
+      <p class="slds-var-m-bottom_small slds-text-body_small">
+        No configuration and no Apex: three invoices defined in the example, as a styled workbook.
+      </p>
+      <c-data-export
+        workbooks={workbooks}
+        label="Export invoices"
+        formats="excel"
+        variant="brand"
+        onexported={handleExported}
+        onexporterror={handleError}
+      ></c-data-export>
+    </div>
+  </div>
+
+  <template lwc:if={summary}>
+    <p class="slds-text-body_small">{summary}</p>
+  </template>
+</template>

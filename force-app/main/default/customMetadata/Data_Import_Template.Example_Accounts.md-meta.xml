@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomMetadata xmlns="http://soap.sforce.com/2006/04/metadata" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+    <label>Example Accounts</label>
+    <protected>false</protected>
+    <values>
+        <field>Active__c</field>
+        <value xsi:type="xsd:boolean">true</value>
+    </values>
+    <values>
+        <field>Definition__c</field>
+        <value xsi:type="xsd:string">{
+  "label": "Example Accounts",
+  "mode": "Partial Success",
+  "sections": [
+    {
+      "type": "rows",
+      "target": "Account",
+      "headerRow": 1,
+      "firstDataRow": 2,
+      "expectHeader": {
+        "A": "Account Name",
+        "B": "Account Number"
+      },
+      "columns": {
+        "A": "Name",
+        "B": "AccountNumber",
+        "C": "Industry",
+        "D": "NumberOfEmployees",
+        "E": "Website"
+      },
+      "matchOn": {
+        "column": "B",
+        "field": "AccountNumber"
+      }
+    }
+  ]
+}</value>
+    </values>
+    <values>
+        <field>Target_Summary__c</field>
+        <value xsi:type="xsd:string">Account</value>
+    </values>
+    <values>
+        <field>Version__c</field>
+        <value xsi:type="xsd:string">1</value>
+    </values>
+</CustomMetadata>

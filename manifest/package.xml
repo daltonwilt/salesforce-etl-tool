@@ -63,6 +63,7 @@
         <members>Data_Export_Sheet.Example_Accounts</members>
         <members>Data_Export_Sheet.Example_Contacts</members>
         <members>Data_Export_Sheet.Example_Open_Opportunities</members>
+        <members>Data_Import_Template.Example_Accounts</members>
         <name>CustomMetadata</name>
     </types>
     <types>

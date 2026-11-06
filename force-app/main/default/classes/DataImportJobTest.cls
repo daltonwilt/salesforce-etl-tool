@@ -22,6 +22,7 @@
 * Developer        Date          Description
 * ----------------------------------------------------------------------
 * Dalton Wilt      2026-08-20    Split out of DataImportFrameworkTest.
+* Dalton Wilt      2026-11-06    Run as DataImportTestUser, with Data_Import_User.
 **********************************************************************************/
 
 @isTest
@@ -79,77 +80,83 @@ private class DataImportJobTest {
     /** Cells at the top of the file must reach a row in a chunk that never sees the top of the file. */
     @isTest
     static void prepare_cellSection_reachesTheRowsAsABinding() {
-        register(
-            JSON.serialize(
-                new Map<String, Object>{
-                    'sections' => new List<Object>{
-                        new Map<String, Object>{
-                            'type' => 'cells',
-                            'applyTo' => 'defaults',
-                            'cells' => new Map<String, String>{ 'B2' => 'Site' }
-                        },
-                        new Map<String, Object>{
-                            'type' => 'rows',
-                            'target' => 'Account',
-                            'firstDataRow' => 5,
-                            'columns' => new Map<String, String>{ 'A' => 'Name' },
-                            'defaults' => new Map<String, String>{ 'Site' => '$Site' }
+        System.runAs(DataImportTestUser.get()) {
+            register(
+                JSON.serialize(
+                    new Map<String, Object>{
+                        'sections' => new List<Object>{
+                            new Map<String, Object>{
+                                'type' => 'cells',
+                                'applyTo' => 'defaults',
+                                'cells' => new Map<String, String>{ 'B2' => 'Site' }
+                            },
+                            new Map<String, Object>{
+                                'type' => 'rows',
+                                'target' => 'Account',
+                                'firstDataRow' => 5,
+                                'columns' => new Map<String, String>{ 'A' => 'Name' },
+                                'defaults' => new Map<String, String>{ 'Site' => '$Site' }
+                            }
                         }
                     }
-                }
-            )
-        );
+                )
+            );
 
-        Id jobId = newJob(TEMPLATE);
-        DataImportJob.stage(jobId, 0, 1, 'title\nPeriod,Q3 2026\n\nName\nAcme');
+            Id jobId = newJob(TEMPLATE);
+            DataImportJob.stage(jobId, 0, 1, 'title\nPeriod,Q3 2026\n\nName\nAcme');
 
-        Test.startTest();
-        DataImportJob.run(jobId, 1, null);
-        Test.stopTest();
+            Test.startTest();
+            DataImportJob.run(jobId, 1, null);
+            Test.stopTest();
 
-        Assert.areEqual(
-            'Q3 2026',
-            [SELECT Site FROM Account WHERE Name = 'Acme' LIMIT 1].Site,
-            'the cell value reached the row'
-        );
+            Assert.areEqual(
+                'Q3 2026',
+                [SELECT Site FROM Account WHERE Name = 'Acme' LIMIT 1].Site,
+                'the cell value reached the row'
+            );
+        }
     }
 
     /** A shifted column would import every row successfully into the wrong fields. */
     @isTest
     static void prepare_columnsHaveMoved_failsTheJob() {
-        Map<String, Object> definition = (Map<String, Object>) JSON.deserializeUntyped(simpleTemplate());
-        List<Object> sections = (List<Object>) definition.get('sections');
-        ((Map<String, Object>) sections[0])
-            .put('expectHeader', new Map<String, String>{ 'A' => 'Name' });
-        register(JSON.serialize(definition));
+        System.runAs(DataImportTestUser.get()) {
+            Map<String, Object> definition = (Map<String, Object>) JSON.deserializeUntyped(simpleTemplate());
+            List<Object> sections = (List<Object>) definition.get('sections');
+            ((Map<String, Object>) sections[0])
+                .put('expectHeader', new Map<String, String>{ 'A' => 'Name' });
+            register(JSON.serialize(definition));
 
-        Id jobId = newJob(TEMPLATE);
-        DataImportJob.stage(jobId, 0, 1, 'Region,Name,Number\nEast,Acme,A-1');
+            Id jobId = newJob(TEMPLATE);
+            DataImportJob.stage(jobId, 0, 1, 'Region,Name,Number\nEast,Acme,A-1');
 
-        Test.startTest();
-        try {
-            DataImportJob.run(jobId, 1, null);
-            Assert.fail('Expected the header check to stop this.');
-        } catch (Exception e) {
-            Assert.isTrue(e.getMessage().contains('Column A'), e.getMessage());
+            Test.startTest();
+            try {
+                DataImportJob.run(jobId, 1, null);
+                Assert.fail('Expected the header check to stop this.');
+            } catch (Exception e) {
+                Assert.isTrue(e.getMessage().contains('Column A'), e.getMessage());
+            }
+            Test.stopTest();
+
+            Assert.areEqual('Failed', reload(jobId).Status__c);
+            Assert.areEqual(0, [SELECT COUNT() FROM Account]);
         }
-        Test.stopTest();
-
-        Assert.areEqual('Failed', reload(jobId).Status__c);
-        Assert.areEqual(0, [SELECT COUNT() FROM Account]);
     }
 
     @isTest
     static void prepare_headerBlock_isKeptForTheRejectFile() {
-        register(simpleTemplate());
-        Id jobId = newJob(TEMPLATE);
-        DataImportJob.stage(jobId, 0, 1, 'Name,Number,Staff\nAcme,A-1,5');
+        System.runAs(DataImportTestUser.get()) {
+            register(simpleTemplate());
+            Id jobId = newJob(TEMPLATE);
+            DataImportJob.stage(jobId, 0, 1, 'Name,Number,Staff\nAcme,A-1,5');
 
-        Test.startTest();
-        DataImportJob.run(jobId, 1, null);
-        Test.stopTest();
+            Test.startTest();
+            DataImportJob.run(jobId, 1, null);
+            Test.stopTest();
 
-        Assert.areEqual('Name,Number,Staff', reload(jobId).Header_Rows__c);
+            Assert.areEqual('Name,Number,Staff', reload(jobId).Header_Rows__c);
+        }
     }
 
     /**
@@ -159,54 +166,60 @@ private class DataImportJobTest {
      */
     @isTest
     static void prepare_parentBindingNotSupplied_failsTheJob() {
-        register(
-            simpleTemplate().replace('"columns"', '"defaults":{"ParentId":"$accountId"},"columns"')
-        );
-        Id jobId = newJob(TEMPLATE); // bindingsJson is '{}'
-        DataImportJob.stage(jobId, 0, 1, 'Name,Number,Staff\nAcme,A-1,50');
+        System.runAs(DataImportTestUser.get()) {
+            register(
+                simpleTemplate().replace('"columns"', '"defaults":{"ParentId":"$accountId"},"columns"')
+            );
+            Id jobId = newJob(TEMPLATE); // bindingsJson is '{}'
+            DataImportJob.stage(jobId, 0, 1, 'Name,Number,Staff\nAcme,A-1,50');
 
-        Test.startTest();
-        try {
-            DataImportJob.run(jobId, 1, null);
-            Assert.fail('Expected the missing binding to stop this.');
-        } catch (Exception e) {
-            Assert.isTrue(e.getMessage().contains('accountId'), e.getMessage());
+            Test.startTest();
+            try {
+                DataImportJob.run(jobId, 1, null);
+                Assert.fail('Expected the missing binding to stop this.');
+            } catch (Exception e) {
+                Assert.isTrue(e.getMessage().contains('accountId'), e.getMessage());
+            }
+            Test.stopTest();
+
+            Assert.areEqual('Failed', reload(jobId).Status__c);
+            Assert.areEqual(0, [SELECT COUNT() FROM Account], 'nothing was created');
         }
-        Test.stopTest();
-
-        Assert.areEqual('Failed', reload(jobId).Status__c);
-        Assert.areEqual(0, [SELECT COUNT() FROM Account], 'nothing was created');
     }
 
     // ---------------- guards ----------------
 
     @isTest
     static void run_jobWithNoFile_fails() {
-        register(simpleTemplate());
-        Id jobId = newJob(TEMPLATE);
+        System.runAs(DataImportTestUser.get()) {
+            register(simpleTemplate());
+            Id jobId = newJob(TEMPLATE);
 
-        Test.startTest();
-        try {
-            DataImportJob.run(jobId, 0, null);
-            Assert.fail('Expected a failure.');
-        } catch (Exception e) {
-            Assert.isTrue(e.getMessage().contains('no file'), e.getMessage());
+            Test.startTest();
+            try {
+                DataImportJob.run(jobId, 0, null);
+                Assert.fail('Expected a failure.');
+            } catch (Exception e) {
+                Assert.isTrue(e.getMessage().contains('no file'), e.getMessage());
+            }
+            Test.stopTest();
+
+            Assert.areEqual('Failed', reload(jobId).Status__c);
         }
-        Test.stopTest();
-
-        Assert.areEqual('Failed', reload(jobId).Status__c);
     }
 
     @isTest
     static void start_templateThatDoesNotExist_throws() {
-        DataImportSpec.jsonOverride = new Map<String, String>();
-        DataImportSpec.clearCache();
+        System.runAs(DataImportTestUser.get()) {
+            DataImportSpec.jsonOverride = new Map<String, String>();
+            DataImportSpec.clearCache();
 
-        try {
-            newJob('NoSuchTemplate');
-            Assert.fail('Expected a failure.');
-        } catch (Exception e) {
-            Assert.isNotNull(e.getMessage());
+            try {
+                newJob('NoSuchTemplate');
+                Assert.fail('Expected a failure.');
+            } catch (Exception e) {
+                Assert.isNotNull(e.getMessage());
+            }
         }
     }
 
@@ -214,25 +227,29 @@ private class DataImportJobTest {
 
     @isTest
     static void status_afterARun_reportsProgress() {
-        register(simpleTemplate());
-        Id jobId = newJob(TEMPLATE);
-        DataImportJob.stage(jobId, 0, 1, 'Name,Number,Staff\nAcme,A-1,5');
+        System.runAs(DataImportTestUser.get()) {
+            register(simpleTemplate());
+            Id jobId = newJob(TEMPLATE);
+            DataImportJob.stage(jobId, 0, 1, 'Name,Number,Staff\nAcme,A-1,5');
 
-        Test.startTest();
-        DataImportJob.run(jobId, 1, null);
-        Test.stopTest();
+            Test.startTest();
+            DataImportJob.run(jobId, 1, null);
+            Test.stopTest();
 
-        Data_Import_Job__c job = DataImportJob.status(jobId);
-        Assert.isNotNull(job);
-        Assert.areEqual(1, job.Rows_Read__c);
+            Data_Import_Job__c job = DataImportJob.status(jobId);
+            Assert.isNotNull(job);
+            Assert.areEqual(1, job.Rows_Read__c);
+        }
     }
 
     @isTest
     static void getTemplates_noMetadataDeployed_stillReturnsAList() {
-        Test.startTest();
-        List<DataImportJob.TemplateInfo> found = DataImportJob.getTemplates();
-        Test.stopTest();
+        System.runAs(DataImportTestUser.get()) {
+            Test.startTest();
+            List<DataImportJob.TemplateInfo> found = DataImportJob.getTemplates();
+            Test.stopTest();
 
-        Assert.isNotNull(found, 'returns a list even with no metadata deployed');
+            Assert.isNotNull(found, 'returns a list even with no metadata deployed');
+        }
     }
 }

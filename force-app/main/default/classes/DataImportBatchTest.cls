@@ -25,6 +25,7 @@
 * Developer        Date          Description
 * ----------------------------------------------------------------------
 * Dalton Wilt      2026-08-20    Split out of DataImportFrameworkTest.
+* Dalton Wilt      2026-11-06    Run as DataImportTestUser, with Data_Import_User.
 **********************************************************************************/
 
 @isTest
@@ -154,20 +155,22 @@ private class DataImportBatchTest {
 
     @isTest
     static void allOrNothincleanFile_commitsEveryRow() {
-        register(simpleTemplate());
-        Id jobId = newJob(TEMPLATE);
-        DataImportJob.stage(jobId, 0, 1, 'Name,Number,Staff\nAcme,A-1,50\nBeta,B-2,10');
+        System.runAs(DataImportTestUser.get()) {
+            register(simpleTemplate());
+            Id jobId = newJob(TEMPLATE);
+            DataImportJob.stage(jobId, 0, 1, 'Name,Number,Staff\nAcme,A-1,50\nBeta,B-2,10');
 
-        Test.startTest();
-        DataImportJob.run(jobId, 1, null);
-        Test.stopTest();
+            Test.startTest();
+            DataImportJob.run(jobId, 1, null);
+            Test.stopTest();
 
-        Data_Import_Job__c job = reload(jobId);
-        // stopTest() drains the chained commit pass too, so a clean file finishes inside the test.
-        Assert.areEqual('Completed', job.Status__c);
-        Assert.areEqual(2, job.Rows_Read__c);
-        Assert.areEqual(0, job.Error_Count__c);
-        Assert.areEqual(2, [SELECT COUNT() FROM Account], 'both rows were written');
+            Data_Import_Job__c job = reload(jobId);
+            // stopTest() drains the chained commit pass too, so a clean file finishes inside the test.
+            Assert.areEqual('Completed', job.Status__c);
+            Assert.areEqual(2, job.Rows_Read__c);
+            Assert.areEqual(0, job.Error_Count__c);
+            Assert.areEqual(2, [SELECT COUNT() FROM Account], 'both rows were written');
+        }
     }
 
     /**
@@ -176,86 +179,92 @@ private class DataImportBatchTest {
      */
     @isTest
     static void allOrNothinanyRowFails_writesNothing() {
-        register(simpleTemplate());
-        Id jobId = newJob(TEMPLATE);
-        DataImportJob.stage(jobId, 0, 1, 'Name,Number,Staff\nAcme,A-1,50\nBeta,B-2,lots');
+        System.runAs(DataImportTestUser.get()) {
+            register(simpleTemplate());
+            Id jobId = newJob(TEMPLATE);
+            DataImportJob.stage(jobId, 0, 1, 'Name,Number,Staff\nAcme,A-1,50\nBeta,B-2,lots');
 
-        Test.startTest();
-        DataImportJob.run(jobId, 1, null);
-        Test.stopTest();
+            Test.startTest();
+            DataImportJob.run(jobId, 1, null);
+            Test.stopTest();
 
-        Data_Import_Job__c job = reload(jobId);
-        Assert.areEqual('Failed', job.Status__c);
-        Assert.areEqual(1, job.Rows_Failed__c);
-        Assert.areEqual(0, [SELECT COUNT() FROM Account], 'the good row must not be written either');
-        Assert.isTrue(job.Message__c.contains('nothing was saved'), job.Message__c);
-        Assert.isTrue(job.Errors__c.contains('Row 3'), job.Errors__c);
+            Data_Import_Job__c job = reload(jobId);
+            Assert.areEqual('Failed', job.Status__c);
+            Assert.areEqual(1, job.Rows_Failed__c);
+            Assert.areEqual(0, [SELECT COUNT() FROM Account], 'the good row must not be written either');
+            Assert.isTrue(job.Message__c.contains('nothing was saved'), job.Message__c);
+            Assert.isTrue(job.Errors__c.contains('Row 3'), job.Errors__c);
+        }
     }
 
     // ---------------- partial success ----------------
 
     @isTest
     static void partialSuccess_oneBadRow_keepsTheGoodRows() {
-        register(partialSuccessTemplate());
-        Id jobId = newJob(TEMPLATE);
-        DataImportJob.stage(
-            jobId,
-            0,
-            1,
-            'Name,Number,Staff\nAcme,A-1,50\nBeta,B-2,lots\nGamma,C-3,7'
-        );
+        System.runAs(DataImportTestUser.get()) {
+            register(partialSuccessTemplate());
+            Id jobId = newJob(TEMPLATE);
+            DataImportJob.stage(
+                jobId,
+                0,
+                1,
+                'Name,Number,Staff\nAcme,A-1,50\nBeta,B-2,lots\nGamma,C-3,7'
+            );
 
-        Test.startTest();
-        DataImportJob.run(jobId, 1, null);
-        Test.stopTest();
+            Test.startTest();
+            DataImportJob.run(jobId, 1, null);
+            Test.stopTest();
 
-        Data_Import_Job__c job = reload(jobId);
-        Assert.areEqual('Completed', job.Status__c);
-        Assert.areEqual(2, job.Records_Committed__c);
-        Assert.areEqual(1, job.Rows_Failed__c);
-        Assert.areEqual(2, [SELECT COUNT() FROM Account]);
-        Assert.isTrue(job.Message__c.contains('2 saved'), job.Message__c);
+            Data_Import_Job__c job = reload(jobId);
+            Assert.areEqual('Completed', job.Status__c);
+            Assert.areEqual(2, job.Records_Committed__c);
+            Assert.areEqual(1, job.Rows_Failed__c);
+            Assert.areEqual(2, [SELECT COUNT() FROM Account]);
+            Assert.isTrue(job.Message__c.contains('2 saved'), job.Message__c);
+        }
     }
 
     /** The whole point of the reject file: the template back, with only the rows that failed. */
     @isTest
     static void partialSuccess_failedRows_areHandedBack() {
-        register(partialSuccessTemplate());
-        Id jobId = newJob(TEMPLATE);
-        DataImportJob.stage(jobId, 0, 1, 'Name,Number,Staff\nAcme,A-1,50\nBeta,B-2,lots');
+        System.runAs(DataImportTestUser.get()) {
+            register(partialSuccessTemplate());
+            Id jobId = newJob(TEMPLATE);
+            DataImportJob.stage(jobId, 0, 1, 'Name,Number,Staff\nAcme,A-1,50\nBeta,B-2,lots');
 
-        Test.startTest();
-        DataImportJob.run(jobId, 1, null);
-        Test.stopTest();
+            Test.startTest();
+            DataImportJob.run(jobId, 1, null);
+            Test.stopTest();
 
-        // The rejected rows stay as chunks - the uploader assembles them into a download. Building
-        // a file here would reimpose a size ceiling and need Files permissions a portal user lacks.
-        List<Data_Import_Chunk__c> rejects = rejectChunks(jobId);
-        Assert.areEqual(1, rejects.size(), 'the failed row was kept');
-        String body = rejects[0].Body__c;
-        Assert.isTrue(body.contains('Beta'), 'the failed row is in it');
-        Assert.isFalse(body.contains('Acme'), 'the row that worked is not');
-        Assert.isTrue(body.contains('is not a number'), 'and the reason rides along: ' + body);
+            // The rejected rows stay as chunks - the uploader assembles them into a download. Building
+            // a file here would reimpose a size ceiling and need Files permissions a portal user lacks.
+            List<Data_Import_Chunk__c> rejects = rejectChunks(jobId);
+            Assert.areEqual(1, rejects.size(), 'the failed row was kept');
+            String body = rejects[0].Body__c;
+            Assert.isTrue(body.contains('Beta'), 'the failed row is in it');
+            Assert.isFalse(body.contains('Acme'), 'the row that worked is not');
+            Assert.isTrue(body.contains('is not a number'), 'and the reason rides along: ' + body);
 
-        // The header block is kept on the job, so the download can be rebuilt from these.
-        Assert.areEqual(
-            'Name,Number,Staff',
-            reload(jobId).Header_Rows__c,
-            'the header the download needs is preserved'
-        );
+            // The header block is kept on the job, so the download can be rebuilt from these.
+            Assert.areEqual(
+                'Name,Number,Staff',
+                reload(jobId).Header_Rows__c,
+                'the header the download needs is preserved'
+            );
 
-        DataImportJob.RejectPage page = DataImportJob.getRejectRows(jobId, null);
-        Assert.areEqual(1, page.rows.size());
-        Assert.areEqual(false, page.hasMore);
-        Assert.areEqual('Name,Number,Staff', page.header, 'the first page carries the header');
+            DataImportJob.RejectPage page = DataImportJob.getRejectRows(jobId, null);
+            Assert.areEqual(1, page.rows.size());
+            Assert.areEqual(false, page.hasMore);
+            Assert.areEqual('Name,Number,Staff', page.header, 'the first page carries the header');
 
-        // Every chunk goes once the file is built - staged rows have been read, and rejected rows
-        // now live in the file. Leaving either behind is storage that grows with every failed import.
-        Assert.areEqual(
-            0,
-            [SELECT COUNT() FROM Data_Import_Chunk__c WHERE Is_Reject__c = FALSE],
-            'the staged input is cleaned up'
-        );
+            // Every chunk goes once the file is built - staged rows have been read, and rejected rows
+            // now live in the file. Leaving either behind is storage that grows with every failed import.
+            Assert.areEqual(
+                0,
+                [SELECT COUNT() FROM Data_Import_Chunk__c WHERE Is_Reject__c = FALSE],
+                'the staged input is cleaned up'
+            );
+        }
     }
 
     /**
@@ -269,26 +278,28 @@ private class DataImportBatchTest {
      */
     @isTest
     static void partialSuccess_rejectFileCannotBeAttached_stillFinishes() {
-        register(partialSuccessTemplate());
-        Id jobId = newJob(TEMPLATE);
-        DataImportJob.stage(jobId, 0, 1, 'Name,Number,Staff\nAcme,A-1,50\nBeta,B-2,lots');
+        System.runAs(DataImportTestUser.get()) {
+            register(partialSuccessTemplate());
+            Id jobId = newJob(TEMPLATE);
+            DataImportJob.stage(jobId, 0, 1, 'Name,Number,Staff\nAcme,A-1,50\nBeta,B-2,lots');
 
-        Test.startTest();
-        DataImportJob.run(jobId, 1, null);
-        Test.stopTest();
+            Test.startTest();
+            DataImportJob.run(jobId, 1, null);
+            Test.stopTest();
 
-        Data_Import_Job__c job = reload(jobId);
-        Assert.areEqual(
-            'Completed',
-            job.Status__c,
-            'the job reports its outcome regardless of the attachment'
-        );
-        Assert.isNotNull(job.Message__c);
-        Assert.areEqual(
-            0,
-            [SELECT COUNT() FROM Data_Import_Chunk__c WHERE Is_Reject__c = FALSE],
-            'and its staged input is still cleaned up'
-        );
+            Data_Import_Job__c job = reload(jobId);
+            Assert.areEqual(
+                'Completed',
+                job.Status__c,
+                'the job reports its outcome regardless of the attachment'
+            );
+            Assert.isNotNull(job.Message__c);
+            Assert.areEqual(
+                0,
+                [SELECT COUNT() FROM Data_Import_Chunk__c WHERE Is_Reject__c = FALSE],
+                'and its staged input is still cleaned up'
+            );
+        }
     }
 
     /**
@@ -298,153 +309,167 @@ private class DataImportBatchTest {
      */
     @isTest
     static void partialSuccess_badRow_carriesItsReason() {
-        register(partialSuccessTemplate());
-        Id jobId = newJob(TEMPLATE);
-        // One row, two bad cells: the picklist AND the number.
-        DataImportJob.stage(jobId, 0, 1, 'Name,Number,Staff\nAcme,A-1,50\nBeta,B-2,lots');
+        System.runAs(DataImportTestUser.get()) {
+            register(partialSuccessTemplate());
+            Id jobId = newJob(TEMPLATE);
+            // One row, two bad cells: the picklist AND the number.
+            DataImportJob.stage(jobId, 0, 1, 'Name,Number,Staff\nAcme,A-1,50\nBeta,B-2,lots');
 
-        Test.startTest();
-        DataImportJob.run(jobId, 1, null);
-        Test.stopTest();
+            Test.startTest();
+            DataImportJob.run(jobId, 1, null);
+            Test.stopTest();
 
-        String rejected = rejectChunks(jobId)[0].Body__c;
-        Assert.isTrue(
-            rejected.contains('is not a number'),
-            'the reason is annotated: ' + rejected
-        );
+            String rejected = rejectChunks(jobId)[0].Body__c;
+            Assert.isTrue(
+                rejected.contains('is not a number'),
+                'the reason is annotated: ' + rejected
+            );
+        }
     }
 
     // ---------------- insert and update ----------------
 
     @isTest
     static void matchOn_existingKey_updatesItAndInsertsTheRest() {
-        insert new Account(Name = 'Existing', AccountNumber = 'A-1', Site = 'old');
-        register(matchingTemplate());
+        System.runAs(DataImportTestUser.get()) {
+            insert new Account(Name = 'Existing', AccountNumber = 'A-1', Site = 'old');
+            register(matchingTemplate());
 
-        Id jobId = newJob(TEMPLATE);
-        DataImportJob.stage(jobId, 0, 1, 'Name,Number,Site\nAcme,A-1,new\nBeta,B-2,fresh');
+            Id jobId = newJob(TEMPLATE);
+            DataImportJob.stage(jobId, 0, 1, 'Name,Number,Site\nAcme,A-1,new\nBeta,B-2,fresh');
 
-        Test.startTest();
-        DataImportJob.run(jobId, 1, null);
-        Test.stopTest();
+            Test.startTest();
+            DataImportJob.run(jobId, 1, null);
+            Test.stopTest();
 
-        Data_Import_Job__c job = reload(jobId);
-        Assert.areEqual(1, job.Records_Updated__c);
-        Assert.areEqual(2, job.Records_Committed__c);
-        Assert.areEqual(
-            'new',
-            [SELECT Site FROM Account WHERE AccountNumber = 'A-1' LIMIT 1].Site
-        );
-        Assert.areEqual(2, [SELECT COUNT() FROM Account]);
+            Data_Import_Job__c job = reload(jobId);
+            Assert.areEqual(1, job.Records_Updated__c);
+            Assert.areEqual(2, job.Records_Committed__c);
+            Assert.areEqual(
+                'new',
+                [SELECT Site FROM Account WHERE AccountNumber = 'A-1' LIMIT 1].Site
+            );
+            Assert.areEqual(2, [SELECT COUNT() FROM Account]);
+        }
     }
 
     /** A blank key means there is nothing to match, so the row is new. */
     @isTest
     static void matchOn_blankKey_inserts() {
-        register(matchingTemplate());
-        Id jobId = newJob(TEMPLATE);
-        DataImportJob.stage(jobId, 0, 1, 'Name,Number,Site\nAcme,,here');
+        System.runAs(DataImportTestUser.get()) {
+            register(matchingTemplate());
+            Id jobId = newJob(TEMPLATE);
+            DataImportJob.stage(jobId, 0, 1, 'Name,Number,Site\nAcme,,here');
 
-        Test.startTest();
-        DataImportJob.run(jobId, 1, null);
-        Test.stopTest();
+            Test.startTest();
+            DataImportJob.run(jobId, 1, null);
+            Test.stopTest();
 
-        Assert.areEqual(1, [SELECT COUNT() FROM Account]);
+            Assert.areEqual(1, [SELECT COUNT() FROM Account]);
+        }
     }
 
     /** Ambiguity has to name the records, or the user cannot go and look at them. */
     @isTest
     static void matchOn_keyMatchesSeveralRecords_failsTheRowAndNamesThem() {
-        insert new List<Account>{
-            new Account(Name = 'First', AccountNumber = 'A-1'),
-            new Account(Name = 'Second', AccountNumber = 'A-1')
-        };
-        register(matchingTemplate());
+        System.runAs(DataImportTestUser.get()) {
+            insert new List<Account>{
+                new Account(Name = 'First', AccountNumber = 'A-1'),
+                new Account(Name = 'Second', AccountNumber = 'A-1')
+            };
+            register(matchingTemplate());
 
-        Id jobId = newJob(TEMPLATE);
-        DataImportJob.stage(jobId, 0, 1, 'Name,Number,Site\nAcme,A-1,here');
+            Id jobId = newJob(TEMPLATE);
+            DataImportJob.stage(jobId, 0, 1, 'Name,Number,Site\nAcme,A-1,here');
 
-        Test.startTest();
-        DataImportJob.run(jobId, 1, null);
-        Test.stopTest();
+            Test.startTest();
+            DataImportJob.run(jobId, 1, null);
+            Test.stopTest();
 
-        Data_Import_Job__c job = reload(jobId);
-        Assert.areEqual(1, job.Rows_Failed__c);
-        Assert.isTrue(job.Errors__c.contains('matches 2 existing records'), job.Errors__c);
-        Assert.isTrue(job.Errors__c.contains('First'), 'the names are listed: ' + job.Errors__c);
+            Data_Import_Job__c job = reload(jobId);
+            Assert.areEqual(1, job.Rows_Failed__c);
+            Assert.isTrue(job.Errors__c.contains('matches 2 existing records'), job.Errors__c);
+            Assert.isTrue(job.Errors__c.contains('First'), 'the names are listed: ' + job.Errors__c);
+        }
     }
 
     @isTest
     static void requireKey_blankKey_failsTheRow() {
-        register(
-            matchingTemplate()
-                .replace('"field":"AccountNumber"', '"field":"AccountNumber","requireKey":true')
-        );
-        Id jobId = newJob(TEMPLATE);
-        DataImportJob.stage(jobId, 0, 1, 'Name,Number,Site\nAcme,,here');
+        System.runAs(DataImportTestUser.get()) {
+            register(
+                matchingTemplate()
+                    .replace('"field":"AccountNumber"', '"field":"AccountNumber","requireKey":true')
+            );
+            Id jobId = newJob(TEMPLATE);
+            DataImportJob.stage(jobId, 0, 1, 'Name,Number,Site\nAcme,,here');
 
-        Test.startTest();
-        DataImportJob.run(jobId, 1, null);
-        Test.stopTest();
+            Test.startTest();
+            DataImportJob.run(jobId, 1, null);
+            Test.stopTest();
 
-        Assert.areEqual(1, reload(jobId).Rows_Failed__c);
-        Assert.areEqual(0, [SELECT COUNT() FROM Account]);
+            Assert.areEqual(1, reload(jobId).Rows_Failed__c);
+            Assert.areEqual(0, [SELECT COUNT() FROM Account]);
+        }
     }
 
     // ---------------- broadcast ----------------
 
     @isTest
     static void broadcast_oneRow_appliesToEveryChild() {
-        Account parent = new Account(Name = 'Parent');
-        insert parent;
-        insert new List<Contact>{
-            new Contact(LastName = 'One', AccountId = parent.Id),
-            new Contact(LastName = 'Two', AccountId = parent.Id)
-        };
-        register(broadcastTemplate());
+        System.runAs(DataImportTestUser.get()) {
+            Account parent = new Account(Name = 'Parent');
+            insert parent;
+            insert new List<Contact>{
+                new Contact(LastName = 'One', AccountId = parent.Id),
+                new Contact(LastName = 'Two', AccountId = parent.Id)
+            };
+            register(broadcastTemplate());
 
-        Id jobId = newJob(
-            TEMPLATE,
-            JSON.serialize(new Map<String, Object>{ 'accountId' => parent.Id })
-        );
-        DataImportJob.stage(jobId, 0, 1, 'Title\nDirector');
+            Id jobId = newJob(
+                TEMPLATE,
+                JSON.serialize(new Map<String, Object>{ 'accountId' => parent.Id })
+            );
+            DataImportJob.stage(jobId, 0, 1, 'Title\nDirector');
 
-        Test.startTest();
-        DataImportJob.run(jobId, 1, null);
-        Test.stopTest();
+            Test.startTest();
+            DataImportJob.run(jobId, 1, null);
+            Test.stopTest();
 
-        Assert.areEqual(
-            2,
-            [SELECT COUNT() FROM Contact WHERE Title = 'Director'],
-            'the single row reached every child'
-        );
-        Assert.areEqual(
-            1,
-            reload(jobId).Rows_Read__c,
-            'the file still has one row, however many children it touched'
-        );
+            Assert.areEqual(
+                2,
+                [SELECT COUNT() FROM Contact WHERE Title = 'Director'],
+                'the single row reached every child'
+            );
+            Assert.areEqual(
+                1,
+                reload(jobId).Rows_Read__c,
+                'the file still has one row, however many children it touched'
+            );
+        }
     }
 
     /** There is nothing to apply a request-level row to until the line items exist. */
     @isTest
     static void broadcast_noChildren_failsTheRow() {
-        Account parent = new Account(Name = 'Childless');
-        insert parent;
-        register(broadcastTemplate());
+        System.runAs(DataImportTestUser.get()) {
+            Account parent = new Account(Name = 'Childless');
+            insert parent;
+            register(broadcastTemplate());
 
-        Id jobId = newJob(
-            TEMPLATE,
-            JSON.serialize(new Map<String, Object>{ 'accountId' => parent.Id })
-        );
-        DataImportJob.stage(jobId, 0, 1, 'Title\nDirector');
+            Id jobId = newJob(
+                TEMPLATE,
+                JSON.serialize(new Map<String, Object>{ 'accountId' => parent.Id })
+            );
+            DataImportJob.stage(jobId, 0, 1, 'Title\nDirector');
 
-        Test.startTest();
-        DataImportJob.run(jobId, 1, null);
-        Test.stopTest();
+            Test.startTest();
+            DataImportJob.run(jobId, 1, null);
+            Test.stopTest();
 
-        Data_Import_Job__c job = reload(jobId);
-        Assert.areEqual(1, job.Rows_Failed__c);
-        Assert.isTrue(job.Errors__c.contains('nothing to apply'), job.Errors__c);
+            Data_Import_Job__c job = reload(jobId);
+            Assert.areEqual(1, job.Rows_Failed__c);
+            Assert.isTrue(job.Errors__c.contains('nothing to apply'), job.Errors__c);
+        }
     }
 
     // ---------------- abort threshold ----------------
@@ -452,21 +477,23 @@ private class DataImportBatchTest {
     /** A file failing on every row is the wrong file; saying so 400,000 times helps nobody. */
     @isTest
     static void abortAfterErrors_thresholdReached_stopsTheJob() {
-        register(simpleTemplate().replace('"label"', '"abortAfterErrors":2,"label"'));
+        System.runAs(DataImportTestUser.get()) {
+            register(simpleTemplate().replace('"label"', '"abortAfterErrors":2,"label"'));
 
-        List<String> lines = new List<String>{ 'Name,Number,Staff' };
-        for (Integer i = 0; i < 10; i++) {
-            lines.add('Acme' + i + ',A-' + i + ',not a number');
+            List<String> lines = new List<String>{ 'Name,Number,Staff' };
+            for (Integer i = 0; i < 10; i++) {
+                lines.add('Acme' + i + ',A-' + i + ',not a number');
+            }
+            Id jobId = newJob(TEMPLATE);
+            DataImportJob.stage(jobId, 0, 1, String.join(lines, '\n'));
+
+            Test.startTest();
+            DataImportJob.run(jobId, 1, null);
+            Test.stopTest();
+
+            Data_Import_Job__c job = reload(jobId);
+            Assert.areEqual('Aborted', job.Status__c);
+            Assert.isTrue(job.Message__c.contains('Stopped after'), job.Message__c);
         }
-        Id jobId = newJob(TEMPLATE);
-        DataImportJob.stage(jobId, 0, 1, String.join(lines, '\n'));
-
-        Test.startTest();
-        DataImportJob.run(jobId, 1, null);
-        Test.stopTest();
-
-        Data_Import_Job__c job = reload(jobId);
-        Assert.areEqual('Aborted', job.Status__c);
-        Assert.isTrue(job.Message__c.contains('Stopped after'), job.Message__c);
     }
 }

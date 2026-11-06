@@ -11,6 +11,7 @@
         <members>DataImportSpec</members>
         <members>DataImportSpecTest</members>
         <members>DataImportTest</members>
+        <members>DataImportTestUser</members>
         <members>DataImportWalker</members>
         <members>DataImportWalkerTest</members>
         <name>ApexClass</name>

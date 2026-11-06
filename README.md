@@ -43,6 +43,29 @@ sf org open
 | `scripts/`                        | Sample Apex and SOQL scripts |
 | `jest-mocks/`                     | Jest mocks for base modules  |
 
+## Data Export
+
+`c-data-export` is a button that downloads Salesforce records as styled Excel workbooks or CSV files. Users pick the format from its menu. Each export is configured in custom metadata:
+
+- **`Data_Export__mdt`**: one export, the value passed as `export-name`. An optional `Zip File Name` bundles several files into one download, and `Styles` (JSON) styles every Excel sheet.
+- **`Data_Export_Sheet__mdt`**: one table. Set the object, its `Fields` (`Name, Owner.Name AS Owner`), an optional SOQL `Filter` (`:recordId` and `:userId` are available), `Order By` and `Row Limit`. Sheets with the same `File Name` share an Excel workbook. In CSV, every sheet is its own file.
+
+```html
+<c-data-export export-name="Example_Account_Overview" record-id={recordId}></c-data-export>
+```
+
+The component can also be placed on record, app and home pages from Lightning App Builder. Records are read as the running user (with sharing, in user mode), and the files are built in the browser. `Example_Account_Overview` is a sample export of accounts, contacts and open opportunities.
+
+| Bundle | Role |
+| --- | --- |
+| `dataExport` | The button: fetches each sheet from `DataExportController`, then builds and downloads the files |
+| `xlsx` | Excel workbooks and styling, with ExcelJS |
+| `csv` | CSV files, with PapaParse |
+| `export` | What both formats share: library loading, value and time zone conversion, zipping (JSZip) |
+| `utils` | Shared LWC helpers (error messages, logging, file downloads, toasts), copied from salesforce-component-library |
+
+ExcelJS, PapaParse and JSZip are static resources copied from `node_modules`. Their versions are pinned in `package.json`. To upgrade one, change its version, run `npm install`, then `npm run vendor`. The Jest suite fails if the static resources fall out of step.
+
 ## Development
 
 | Command                      | Description                              |
@@ -51,6 +74,7 @@ sf org open
 | `npm test`                   | Run LWC Jest unit tests                  |
 | `npm run test:unit:watch`    | Run Jest tests in watch mode             |
 | `npm run test:unit:coverage` | Run Jest tests with a coverage report    |
+| `npm run vendor`             | Copy pinned libraries into static resources |
 
 A pre-commit hook (Husky + lint-staged) lints and tests staged LWC files automatically.
 

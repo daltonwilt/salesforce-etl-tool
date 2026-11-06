@@ -33,6 +33,21 @@ sf project deploy start
 sf org open
 ```
 
+### Grant access
+
+Deploying gives no one access to the import and export components, admins included. Assign the permission sets to each user who needs them:
+
+```sh
+sf org assign permset --name Data_Import_User --name Data_Export_User --target-org my-org
+```
+
+| Permission set | Grants |
+| --- | --- |
+| `Data_Import_User` | `DataImportJob`, the import templates, and the `Data_Import_Job__c` and `Data_Import_Chunk__c` records and fields |
+| `Data_Export_User` | `DataExport` and the export configuration |
+
+Both read and write records as the user, so users also need access to the objects and fields being imported or exported.
+
 ## Project Structure
 
 | Path                              | Contents                     |

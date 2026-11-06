@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<StaticResource xmlns="http://soap.sforce.com/2006/04/metadata">
+    <cacheControl>Public</cacheControl>
+    <contentType>application/javascript</contentType>
+    <description>PapaParse browser build, used by c/csv to write CSV exports. Version 5.7.0, copied by scripts/vendor-libraries.js - do not edit.</description>
+</StaticResource>
